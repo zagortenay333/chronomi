@@ -1,0 +1,67 @@
+## Todo file format
+
+All todo data is stored inside a single text file.
+
+The format is the markup language described in the help applet,
+and each todo note is a top-level meta note. For example:
+
+> [x] Here is done task.
+  [] A task yet to be completed.
+  [created:2000-01-01 @foo @bar] Take the dog out.
+
+Here is a complete list of attributes that top-level meta blocks
+can have:
+
+> [ x
+    #1
+    pin
+    hide
+    @foo
+    track:3
+    due:2000-01-24
+    created:2000-01-24
+  ]
+    The task body.
+
+Here is the explanation of each attribute:
+
+|-------------------------------------------------
+| x
+| Task is marked as completed.
+|-------------------------------------------------
+| \#1
+| Task has priority 1.
+|-------------------------------------------------
+| pin
+| A marker used for sorting and filtering.
+|-------------------------------------------------
+| \@foo
+| Task has tag foo.
+|-------------------------------------------------
+| track: 3
+| Task has an entry in the time tracker that
+  is identified by the number 3.
+|-------------------------------------------------
+| due: 2000-01-24
+| Task has a due date. The date format follows
+  the ISO 8601 spec: year-month-day.
+|-------------------------------------------------
+| created: 2000-01-24
+| Date of creation in ISO format.
+|-------------------------------------------------
+| hide
+| Only these filter expressions can evaluate to
+  true when applied to hidden tasks:
+
+  1. `*
+  2. `hide
+  3. `hide & expr
+|-------------------------------------------------
+
+## Filters and kanban boards
+
+With each deck you can specify a comma separated list of 
+filter expressions. For each filter expression there will
+be 1 column of tasks in the main view. A given task will
+go into the first column starting from the left for which
+it passes the given filter.

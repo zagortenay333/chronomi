@@ -1,0 +1,19 @@
+## Deck format
+
+A flashcards deck is stored in the custom kronomi
+config format and it looks like this:
+
+> session = Int # in range [1, 32]
+  cards = [
+      {
+          bucket   = Int, # in range [0, 5]
+          question = String,
+          answer   = String,
+      },
+      {
+          bucket   = 3,
+          question = "How are you?"
+          answer   = "Very good!",
+      },
+      ...
+  ]

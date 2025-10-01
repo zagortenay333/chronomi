@@ -1,0 +1,494 @@
+/* ==========================================================================
+ * Utils
+ * ========================================================================== */
+@define-color accent_color shade(@theme_selected_bg_color, 1.7);
+@define-color base2_color  shade(@theme_base_color, .9);
+@define-color base3_color  shade(@theme_base_color, 1.9);
+
+.kronomi-invisible     { opacity: 0; }
+.kronomi-bg-error      { background: shade(@error_color, .5); }
+.kronomi-bg-success    { background: shade(@success_color, .5); }
+.kronomi-bg-warning    { background: shade(@warning_color, .5); }
+.kronomi-padding       { padding: 8px; }
+.kronomi-base-color    { color: @base2_color; }
+.kronomi-accent-color  { color: @accent_color; }
+.kronomi-error-color   { color: @error_color; }
+.kronomi-warning-color { color: @warning_color; }
+.kronomi-success-color { color: @success_color; }
+
+/* ==========================================================================
+ * Top level
+ * ========================================================================== */
+
+/*******
+* {
+    all: unset;     
+}  
+**********/
+
+.window {
+    background: transparent;
+}
+
+headerbar {
+    min-height: 0;
+    padding: 2px;
+    background: alpha(@base2_color, .97);
+}
+
+.kronomi-main-box {
+    background: @theme_base_color;
+}
+
+.kronomi-main-box > viewport > * {
+    padding: 8px;
+}
+
+.kronomi-main-box > * > viewport > * {
+    padding: 8px;
+}
+
+.kronomi-applet-switch-bar {
+    padding: 8px;
+    background: alpha(@base2_color, .97);
+    border-width: 0;
+    border-right-width: 1px;
+}
+
+.kronomi-applet-switcher-button {
+    margin-bottom: 4px;
+}
+
+.kronomi-applet-switcher-button:hover {
+    background: @theme_bg_color;
+}
+
+.kronomi-applet-switcher-button.active {
+    background: @theme_bg_color;
+    color: @warning_color;
+}
+
+.kronomi-sidebar {
+    background: alpha(@base2_color, .97);
+    border-width: 0;
+    border-right-width: 1px;
+    min-width: 200px;
+}
+
+.kronomi-sidebar > viewport > * {
+    padding: 8px;
+}
+
+.kronomi-floating-button-box {
+    padding-left: 8px;
+    padding-top: 8px;
+    background: @theme_base_color;
+}
+
+/* ==========================================================================
+ * Scrollbox
+ * ========================================================================== */
+.kronomi-scrollbox {
+}
+
+.kronomi-scrollbox > viewport > box {
+}
+
+scrollbar {
+    border-width: 0;
+    background-color: transparent;
+}
+
+/* ==========================================================================
+ * Sliders
+ * ========================================================================== */
+scale {
+    min-width: 150px;
+}
+
+/* ==========================================================================
+ * Box
+ * ========================================================================== */
+.kronomi-box {
+    padding: 8px;
+    background: @theme_bg_color;
+    border-radius: 6px;
+}
+
+/* ==========================================================================
+ * Buttons
+ * ========================================================================== */
+.kronomi-button {
+}
+
+.kronomi-tag-button {
+    border: 0;
+    background: @base2_color;
+    padding: 0 6px;
+    border-radius: 12px;
+    font-weight: bold;
+}
+
+.kronomi-tag-button:hover,
+.kronomi-tag-button:focus {
+    background: @base3_color;
+}
+
+/* ==========================================================================
+ * Popover
+ * ========================================================================== */
+.kronomi-popover {
+}
+
+/* ==========================================================================
+ * Date Picker
+ * ========================================================================== */
+.kronomi-date-picker-button {
+}
+
+.kronomi-date-picker-popover calendar {
+    border-radius: 6px;
+    background-color: @theme_bg_color;
+}
+
+/* ==========================================================================
+ * Row
+ * ========================================================================== */
+.kronomi-row-group > * {
+    border-radius: 0;
+    border-top-width: 0;
+}
+
+.kronomi-row-group > *:first-child {
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-top-width: 1px;
+}
+
+.kronomi-row-group > *:last-child {
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+
+.kronomi-row {
+    min-height: 2em;
+    min-width: 320px;
+}
+
+.kronomi-row > label {
+    padding-right: 1em;
+}
+
+/* ==========================================================================
+ * Int Picker
+ * ========================================================================== */
+.kronomi-int-picker.invalid entry {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.kronomi-int-picker.invalid button {
+    color: @error_color;
+    border-left-width: 0;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+/* ==========================================================================
+ * Dropdown
+ * ========================================================================== */
+.kronomi-dropdown-button {
+}
+
+.kronomi-dropdown-popover {
+}
+
+/* ==========================================================================
+ * Day Picker
+ * ========================================================================== */
+.kronomi-day-picker button {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+/* ==========================================================================
+ * Date Picker
+ * ========================================================================== */
+.kronomi-time-picker {
+}
+
+/* ==========================================================================
+ * Expander
+ * ========================================================================== */
+.kronomi-expander.open > .kronomi-button {
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.kronomi-expander > .kronomi-box.kronomi-body {
+    border-top-width: 0;
+    border-top-right-radius: 0;
+    border-top-left-radius: 0;
+    background: @theme_bg_color;
+    padding: 6px;
+}
+
+/* ==========================================================================
+ * File Picker
+ * ========================================================================== */
+.kronomi-file-picker entry {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.kronomi-file-picker button {
+    border-left-width: 0;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+/* ==========================================================================
+ * Shortcut Picker
+ * ========================================================================== */
+.kronomi-shortcut-picker {
+}
+
+/* ==========================================================================
+ * Card
+ * ========================================================================== */
+.kronomi-card {
+    padding: 0;
+    min-width: 350px;
+}
+
+.kronomi-card .kronomi-card-header {
+    padding: 3px 8px;
+    border-top-right-radius: 6px;
+    border-top-left-radius: 6px;
+    border-top-width: 0;
+    border-left-width: 0;
+    border-right-width: 0;
+}
+
+.kronomi-card .kronomi-card-body {
+    padding: 8px;
+    border-radius: 6px;
+}
+
+.kronomi-card .kronomi-card-left-header {
+}
+
+.kronomi-card .kronomi-card-header button {
+    padding: 3px;
+}
+
+.kronomi-card .kronomi-card-header button:hover {
+    background: @base2_color;
+}
+
+.kronomi-card .kronomi-card-header button:active {
+    background: @base2_color;
+}
+
+.kronomi-sort-row .kronomi-card-header {
+    border: 0;
+}
+
+/* ==========================================================================
+ * Kanban
+ * ========================================================================== */
+.kronomi-kanban-header {
+    font-weight: bold;
+}
+
+/* ==========================================================================
+ * Image
+ * ========================================================================== */
+.kronomi-image {
+    padding: 0;
+}
+
+.kronomi-image > viewport > box {
+    padding: 0;
+}
+
+/* ==========================================================================
+ * Markup
+ * ========================================================================== */
+.kronomi-markup .block:first-child { margin-top: 0; }
+.kronomi-markup .block {
+    margin-top: .8em;
+}
+
+.kronomi-markup .separator { border-bottom-width: 1px; }
+
+.kronomi-markup .paragraph {}
+
+.kronomi-markup .list .bullet {
+    padding-right: .6em;
+    color: @warning_color;
+    font-weight: bold;
+}
+
+.kronomi-markup .ordered-list .bullet {
+    font-weight: bold;
+    padding-right: .6em;
+    color: @warning_color;
+}
+
+.kronomi-markup .admonition {
+    background: @theme_bg_color;
+    border-width: 1px;
+    border-radius: 6px;
+}
+
+.kronomi-markup .admonition.tip .header { color: @accent_color; }
+.kronomi-markup .admonition.note .header { color: @success_color; }
+.kronomi-markup .admonition.warning .header { color: @warning_color; }
+.kronomi-markup .admonition.important .header { color: @error_color; }
+.kronomi-markup .admonition .bod { padding: 8px; }
+.kronomi-markup .admonition .header {
+    padding: 8px;
+    border-top-width: 0;
+    border-right-width: 0;
+    border-left-width: 0;
+    border-bottom-width: 1px;
+}
+
+.kronomi-markup .raw-block {
+    padding: 8px;
+    color: #93a1a1;
+    border-radius: 6px;
+    background: #002b36;
+    border-color: rgba(0, 0, 0, .5);
+    border-width: 1px;
+    font-family: monospace;
+}
+
+.kronomi-markup .header {
+    font-weight: 600;
+    padding-top: .2em;
+    padding-bottom: .2em;
+    border-top-width: 0;
+    border-right-width: 0;
+    border-left-width: 0;
+    border-bottom-width: 1px;
+}
+.kronomi-markup .header.h1 { font-size: 2em; }
+.kronomi-markup .header.h2 { font-size: 1.5em; }
+.kronomi-markup .header.h3 { font-size: 1.25em; }
+.kronomi-markup .header.h4 {}
+.kronomi-markup .header.h5 {}
+
+.kronomi-markup .table .cell {
+    padding: 8px;
+    background: @theme_bg_color;
+    border-left-width: 0;
+    border-top-width: 0;
+    border-bottom-width: 1px;
+    border-right-width: 1px;
+}
+
+.kronomi-markup .table .cell.first-col { border-left-width: 1px; }
+.kronomi-markup .table .cell.first-row { border-top-width: 1px; }
+.kronomi-markup .table .cell.first-row.first-col { border-top-left-radius: 6px; }
+.kronomi-markup .table .cell.first-row.last-col  { border-top-right-radius: 6px; }
+.kronomi-markup .table .cell.last-row.first-col  { border-bottom-left-radius: 6px; }
+.kronomi-markup .table .cell.last-row.last-col   { border-bottom-right-radius: 6px; }
+.kronomi-markup .table .cell.invisible.no-top-border  { border-top-width: 0; }
+.kronomi-markup .table .cell.invisible.no-left-border { border-left-width: 0; }
+.kronomi-markup .table .cell.invisible.last-col       { border-right-width: 0; }
+.kronomi-markup .table .cell.invisible.last-row       { border-bottom-width: 0; }
+.kronomi-markup .table .cell.invisible {
+    background: transparent;
+    border-bottom-width: 0;
+    border-right-width: 0;
+}
+
+.kronomi-markup .highlight {
+    border-radius: 6px;
+    background-color: alpha(@warning_color, .3);
+}
+
+.kronomi-markup .table .highlight {
+    background-color: alpha(@warning_color, .3);
+}
+
+/* ==========================================================================
+ * Text View
+ * ========================================================================== */
+.kronomi-text-view-scroll {
+    min-width: 250px;
+    padding: 0;
+}
+
+.kronomi-text-view-scroll > viewport > box {
+    padding: 0;
+}
+
+.kronomi-text-view {
+    min-width: 150px;
+    min-height: 1.5em;
+    background: @theme_base_color;
+    border-radius: 6px;
+    padding: 8px;
+}
+
+.kronomi-text-view:focus {
+    box-shadow: 0 0 0 2px inset @theme_selected_bg_color;
+    transition-duration: 200ms;
+    padding: 8px;
+}
+
+/* ==========================================================================
+ * Markup Editor
+ * ========================================================================== */
+.kronomi-markup-editor {
+    padding: 8px;
+}
+
+.kronomi-markup-editor .kronomi-markup {
+    margin-left: 8px;
+}
+
+.kronomi-entry-card .kronomi-card-body {
+    background: @theme_base_color;
+    padding: 0;
+    border-top-right-radius: 0;
+    border-top-left-radius: 0;
+    border-bottom-right-radius: 6px;
+    border-bottom-left-radius: 6px;
+}
+
+.kronomi-entry-card textview:focus {
+    padding: 8px;
+    border-top-right-radius: 0;
+    border-top-left-radius: 0;
+    border-bottom-right-radius: 6px;
+    border-bottom-left-radius: 6px;
+}
+
+.kronomi-entry-card textview {
+    background: transparent;
+    border-width: 0;
+}
+
+/* ==========================================================================
+ * Table of contents
+ * ========================================================================== */
+.kronomi-toc-button.active {
+    background: @theme_bg_color;
+    color: @warning_color;
+}
+
+.kronomi-toc-button.active {
+    background: @theme_bg_color;
+    color: @warning_color;
+}
+
+.kronomi-toc-editor-enable {
+    background: transparent;
+    border-radius: 0;
+    border-width: 0;
+    border-bottom-width: 1px;
+}
