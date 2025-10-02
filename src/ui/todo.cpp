@@ -220,6 +220,8 @@ static Kanban *kanban_new (Mem *mem) {
     array_init(&kanban->columns, mem);
     gtk_widget_set_hexpand(kanban->widget->widget, false);
     gtk_widget_set_halign(kanban->widget->widget, GTK_ALIGN_CENTER);
+    gtk_widget_set_vexpand(kanban->widget->widget, true);
+    // gtk_widget_set_halign(kanban->widget->widget, GTK_ALIGN_CENTER);
 
     //
     // get filters
