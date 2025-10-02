@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Kronomi
+Comment=Kronomi GTK4 application
+Exec=kronomi
+Icon=Kronomi
+Terminal=false
+Categories=Utility;
