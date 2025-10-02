@@ -10,6 +10,7 @@
 .kronomi-bg-success    { background: shade(@success_color, .5); }
 .kronomi-bg-warning    { background: shade(@warning_color, .5); }
 .kronomi-padding       { padding: 8px; }
+.kronomi-bold          { font-weight: bold; }
 .kronomi-base-color    { color: @base2_color; }
 .kronomi-accent-color  { color: @accent_color; }
 .kronomi-error-color   { color: @error_color; }

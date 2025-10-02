@@ -61,6 +61,18 @@ static TaskCard *task_card_new (Mem *mem, Task *task, GtkWidget *body) {
     }
 
     //
+    // priority label
+    //
+    if (task->config->flags & MARKUP_AST_META_CONFIG_HAS_PRIORITY) {
+        tmem_new(tm);
+        String l = astr_fmt(tm, "#%lu%c", task->config->priority, 0);
+        GtkWidget *label = gtk_label_new(l.data);
+        gtk_box_append(GTK_BOX(card->widget->header), label);
+        gtk_widget_add_css_class(label, "kronomi-bold");
+        gtk_widget_add_css_class(label, "kronomi-warning-color");
+    }
+
+    //
     // dates
     //
     if (task->config->flags & (MARKUP_AST_META_CONFIG_HAS_DUE | MARKUP_AST_META_CONFIG_HAS_CREATED | MARKUP_AST_META_CONFIG_HAS_COMPLETED)) {
@@ -221,7 +233,6 @@ static Kanban *kanban_new (Mem *mem) {
     gtk_widget_set_hexpand(kanban->widget->widget, false);
     gtk_widget_set_halign(kanban->widget->widget, GTK_ALIGN_CENTER);
     gtk_widget_set_vexpand(kanban->widget->widget, true);
-    // gtk_widget_set_halign(kanban->widget->widget, GTK_ALIGN_CENTER);
 
     //
     // get filters
