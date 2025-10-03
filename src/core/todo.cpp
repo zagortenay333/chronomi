@@ -44,16 +44,16 @@ Void todo_flush_file (TodoApplet *applet) {
     if (deck) fs_write_entire_file(deck->path, astr_to_str(&content));
 }
 
-Bool todo_passes_filter (Task *task , MarkupAst *filter) {
+static Bool todo_passes_filter_ (Task *task, MarkupAst *filter) {
     MarkupAstMetaConfig *c = task->config;
     String text = markup_ast_get_text(task->ast, task->text);
     MarkupAst *op1 = array_try_get(&filter->children, 0);
     MarkupAst *op2 = array_try_get(&filter->children, 1);
 
     switch (filter->tag) {
-    case MARKUP_AST_FILTER_NOT:      return !todo_passes_filter(task, op1);
-    case MARKUP_AST_FILTER_OR:       return todo_passes_filter(task, op1) || todo_passes_filter(task, op2);
-    case MARKUP_AST_FILTER_AND:      return todo_passes_filter(task, op1) && todo_passes_filter(task, op2);
+    case MARKUP_AST_FILTER_NOT:      return !todo_passes_filter_(task, op1);
+    case MARKUP_AST_FILTER_OR:       return todo_passes_filter_(task, op1) || todo_passes_filter_(task, op2);
+    case MARKUP_AST_FILTER_AND:      return todo_passes_filter_(task, op1) && todo_passes_filter_(task, op2);
     case MARKUP_AST_FILTER_ANY:      return true;
     case MARKUP_AST_FILTER_DUE:      return c->flags & MARKUP_AST_META_CONFIG_HAS_DUE;
     case MARKUP_AST_FILTER_DONE:     return c->flags & MARKUP_AST_META_CONFIG_HAS_DONE;
@@ -67,6 +67,17 @@ Bool todo_passes_filter (Task *task , MarkupAst *filter) {
     case MARKUP_AST_FILTER_ERROR:    return false;
     default: badpath;
     }
+}
+
+Bool todo_passes_filter (Task *task, MarkupAst *filter) {
+    MarkupAst *op1 = array_try_get(&filter->children, 0);
+
+    if (task->config->flags & MARKUP_AST_META_CONFIG_HAS_HIDE) {
+        if (filter->tag == MARKUP_AST_FILTER_ANY || filter->tag == MARKUP_AST_FILTER_HIDE) return true;
+        if (! (filter->tag == MARKUP_AST_FILTER_AND && op1->tag == MARKUP_AST_FILTER_HIDE)) return false;
+    }
+
+    return todo_passes_filter_(task, filter);
 }
 
 I64 todo_compare_tasks (Task *a, Task *b, Slice<Sort> sorts) {
