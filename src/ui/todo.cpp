@@ -302,7 +302,7 @@ struct ViewSort {
     U64 scroll_pos;
 };
 
-CString sort_by_string (SortBy sort) {
+CString sort_to_string (SortBy sort) {
     switch (sort) {
     case SORT_BY_PIN:      return tr("Sort by pin");
     case SORT_BY_DUE:      return tr("Sort by due");
@@ -366,7 +366,7 @@ static SortRow *sort_row_new (Sort sort) {
     gtk_widget_set_visible(row->widget->body, false);
     gtk_widget_add_css_class(row->widget->widget, "kronomi-sort-row");
 
-    GtkWidget *label = gtk_label_new(sort_by_string(sort.by));
+    GtkWidget *label = gtk_label_new(sort_to_string(sort.by));
     gtk_box_append(GTK_BOX(row->widget->left_header), label);
 
     UiButton *move_down_button = ui_button_new(context.view->arena, "kronomi-pan-down-symbolic", 0, false, false, true);
