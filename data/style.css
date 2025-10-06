@@ -34,7 +34,7 @@
 headerbar {
     min-height: 0;
     padding: 2px;
-    background: alpha(@base2_color, .97);
+    background: @base2_color;
 }
 
 .kronomi-main-box {
@@ -51,7 +51,7 @@ headerbar {
 
 .kronomi-applet-switch-bar {
     padding: 8px;
-    background: alpha(@base2_color, .97);
+    background: @base2_color;
     border-width: 0;
     border-right-width: 1px;
 }
@@ -70,7 +70,7 @@ headerbar {
 }
 
 .kronomi-sidebar {
-    background: alpha(@base2_color, .97);
+    background: @base2_color;
     border-width: 0;
     border-right-width: 1px;
     min-width: 200px;
