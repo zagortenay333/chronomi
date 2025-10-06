@@ -644,6 +644,7 @@ static Void deck_view_new () {
 
     UiPopover *help_button = ui_popover_new(context.view->arena, "kronomi-question-symbolic", 0, false, false, false);
     gtk_box_append(GTK_BOX(box), help_button->widget);
+    gtk_popover_set_position(GTK_POPOVER(help_button->popover), GTK_POS_RIGHT);
 
     AString help_text = astr_new(context.view->arena);
     astr_push_str(&help_text, fs_read_entire_file(tm, str("data/docs/deck_view_help"), 0));
