@@ -1,12 +1,12 @@
 #include <gio/gio.h>
 
 #if defined (__ELF__) && ( __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 6))
-# define SECTION __attribute__ ((section (".gresource."), aligned (sizeof(void *) > 8 ? sizeof(void *) : 8)))
+# define SECTION __attribute__ ((section (".gresource.gresource"), aligned (sizeof(void *) > 8 ? sizeof(void *) : 8)))
 #else
 # define SECTION
 #endif
 
-static const SECTION union { const guint8 data[273317]; const double alignment; void * const ptr;}  _resource_data = {
+static const SECTION union { const guint8 data[273317]; const double alignment; void * const ptr;}  gresource_resource_data = {
   "\107\126\141\162\151\141\156\164\000\000\000\000\000\000\000\000"
   "\030\000\000\000\100\006\000\000\000\000\000\050\070\000\000\000"
   "\000\000\000\000\003\000\000\000\005\000\000\000\005\000\000\000"
@@ -17091,11 +17091,11 @@ static const SECTION union { const guint8 data[273317]; const double alignment; 
   "\006\000\000\000\054\000\000\000\010\000\000\000\021\000\000\000"
   "\066\000\000\000" };
 
-static GStaticResource static_resource = { _resource_data.data, sizeof (_resource_data.data) - 1 /* nul terminator */, NULL, NULL, NULL };
+static GStaticResource static_resource = { gresource_resource_data.data, sizeof (gresource_resource_data.data) - 1 /* nul terminator */, NULL, NULL, NULL };
 
 G_MODULE_EXPORT
-GResource *_get_resource (void);
-GResource *_get_resource (void)
+GResource *gresource_get_resource (void);
+GResource *gresource_get_resource (void)
 {
   return g_static_resource_get_resource (&static_resource);
 }
@@ -17243,24 +17243,24 @@ GResource *_get_resource (void)
 #ifdef G_HAS_CONSTRUCTORS
 
 #ifdef G_DEFINE_CONSTRUCTOR_NEEDS_PRAGMA
-#pragma G_DEFINE_CONSTRUCTOR_PRAGMA_ARGS(resource_constructor)
+#pragma G_DEFINE_CONSTRUCTOR_PRAGMA_ARGS(gresourceresource_constructor)
 #endif
-G_DEFINE_CONSTRUCTOR(resource_constructor)
+G_DEFINE_CONSTRUCTOR(gresourceresource_constructor)
 #ifdef G_DEFINE_DESTRUCTOR_NEEDS_PRAGMA
-#pragma G_DEFINE_DESTRUCTOR_PRAGMA_ARGS(resource_destructor)
+#pragma G_DEFINE_DESTRUCTOR_PRAGMA_ARGS(gresourceresource_destructor)
 #endif
-G_DEFINE_DESTRUCTOR(resource_destructor)
+G_DEFINE_DESTRUCTOR(gresourceresource_destructor)
 
 #else
 #warning "Constructor not supported on this compiler, linking in resources will not work"
 #endif
 
-static void resource_constructor (void)
+static void gresourceresource_constructor (void)
 {
   g_static_resource_init (&static_resource);
 }
 
-static void resource_destructor (void)
+static void gresourceresource_destructor (void)
 {
   g_static_resource_fini (&static_resource);
 }
