@@ -27,7 +27,7 @@
 //     array_iter (x, &a) printf("[%lu] = %lu\n", ARRAY_IDX, x);
 //
 // =============================================================================
-#include <cstring>
+#include <string.h>
 #include "util/mem.h"
 
 template <typename T>
@@ -112,7 +112,7 @@ Slice<Elem(T)> array_increase_count (T *a, U64 n, Bool zeroed) {
     if (n) array_ensure_capacity(a, n);
     Slice<Elem(T)> r = { .data=&a->data[a->count], .count=n };
     a->count += n;
-    if (zeroed) std::memset(r.data, 0, array_elem_size(a) * n);
+    if (zeroed) memset(r.data, 0, array_elem_size(a) * n);
     return r;
 }
 
@@ -162,7 +162,7 @@ template <typename T>
 Void array_sort_cmp (T *a, Int(*cmp)(Elem(T)*, Elem(T)*)) {
     if (a->count == 0) return;
     Auto fn = reinterpret_cast<int(*)(const Void *, const Void *)>(cmp);
-    std::qsort(a->data, a->count, array_elem_size(a), fn);
+    qsort(a->data, a->count, array_elem_size(a), fn);
 }
 
 template <typename T> Void array_sort    (T *a)               { array_sort_cmp(a, c_compare); }
@@ -194,7 +194,7 @@ template <typename T> Void    array_swap_remove (T *a, U64 i)     { array_swap(a
 // =============================================================================
 template <typename T>
 U64 array_bsearch (T *a, Elem(T) *elem, Int(*cmp)(Elem(T)*, Elem(T)*)) {
-    Void *p = std::bsearch(elem, a->data, a->count, array_elem_size(a), cmp);
+    Void *p = bsearch(elem, a->data, a->count, array_elem_size(a), cmp);
     return p ? (static_cast<U8*>(p) - a->data) / array_elem_size(a) : ARRAY_NIL_IDX;
 }
 
@@ -298,7 +298,7 @@ Slice<Elem(T)> array_insert_gap (T *a, U64 count, U64 idx, Bool zeroed) {
     Elem(T) *p = &a->data[idx];
     memmove(&p[count], p, array_elem_size(a) * bytes_to_move);
     Slice<Elem(T)> r = { .data=p, .count=count };
-    if (zeroed) std::memset(r.data, 0, array_elem_size(a) * count);
+    if (zeroed) memset(r.data, 0, array_elem_size(a) * count);
     return r;
 }
 
@@ -306,7 +306,7 @@ template <typename T, typename U>
 Void array_push_many (T *a, U elems) {
     if (elems.count) {
         Slice<Elem(T)> p = array_increase_count(a, elems.count, false);
-        std::memcpy(p.data, elems.data, array_elem_size(a) * elems.count);
+        memcpy(p.data, elems.data, array_elem_size(a) * elems.count);
     }
 }
 
@@ -314,7 +314,7 @@ template <typename T, typename U>
 Void array_insert_many (T *a, U elems, U64 idx) {
     if (elems.count) {
         Slice<Elem(T)> p = array_insert_gap(a, elems.count, idx, false);
-        std::memcpy(p.data, elems.data, array_elem_size(a) * elems.count);
+        memcpy(p.data, elems.data, array_elem_size(a) * elems.count);
     }
 }
 

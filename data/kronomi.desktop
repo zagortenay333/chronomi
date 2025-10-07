@@ -6,3 +6,4 @@ Exec=kronomi
 Icon=Kronomi
 Terminal=false
 Categories=Utility;
+Name[en_US]=kronomi.desktop
