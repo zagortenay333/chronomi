@@ -51,7 +51,8 @@ static Void init_applet (AppletInitFn init, CString icon_name, Bool icon_on_bott
 
 static Void init (GtkApplication *app, Void *) {
     GtkIconTheme *theme = gtk_icon_theme_get_for_display(gdk_display_get_default());
-    gtk_icon_theme_add_search_path(theme, "data/icons/");
+    // gtk_icon_theme_add_search_path(theme, "data/icons/");
+    gtk_icon_theme_add_resource_path(theme, "/org/zagortenay/kronomi/data/icons");
 
     GtkCssProvider *css_provider = gtk_css_provider_new();
     gtk_css_provider_load_from_path(css_provider, "data/style.css");
@@ -133,7 +134,7 @@ static Void init (GtkApplication *app, Void *) {
 }
 
 Int ui_main (Int argc, Char **argv) {
-    Auto app = gtk_application_new("org.gtk.Kronomi", G_APPLICATION_DEFAULT_FLAGS);
+    Auto app = gtk_application_new("org.zagortenay.kronomi", G_APPLICATION_DEFAULT_FLAGS);
     g_signal_connect(app, "activate", G_CALLBACK(init), 0);
     Int status = g_application_run(G_APPLICATION(app), argc, argv);
     g_object_unref(app);
