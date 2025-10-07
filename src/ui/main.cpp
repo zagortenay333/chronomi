@@ -52,7 +52,7 @@ static Void init_applet (AppletInitFn init, CString icon_name, Bool icon_on_bott
 static Void init (GtkApplication *app, Void *) {
     GtkIconTheme *theme = gtk_icon_theme_get_for_display(gdk_display_get_default());
     // gtk_icon_theme_add_search_path(theme, "data/icons/");
-    gtk_icon_theme_add_resource_path(theme, "/org/zagortenay/kronomi/data/icons");
+    gtk_icon_theme_add_resource_path(theme, "/data/icons");
 
     GtkCssProvider *css_provider = gtk_css_provider_new();
     gtk_css_provider_load_from_path(css_provider, "data/style.css");
