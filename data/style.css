@@ -1,8 +1,8 @@
 /* ==========================================================================
  * Utils
  * ========================================================================== */
-@define-color accent_color shade(@theme_selected_bg_color, 1.7);
-@define-color base2_color  shade(@theme_base_color, .9);
+@define-color accent_color shade(@theme_selected_bg_color, 1.2);
+@define-color base2_color  shade(@theme_bg_color, 1);
 @define-color base3_color  shade(@theme_base_color, 1.9);
 
 .kronomi-invisible     { opacity: 0; }
@@ -20,13 +20,6 @@
 /* ==========================================================================
  * Top level
  * ========================================================================== */
-
-/*******
-* {
-    all: unset;     
-}  
-**********/
-
 .window {
     background: transparent;
 }
@@ -133,6 +126,12 @@ scale {
 .kronomi-tag-button:hover,
 .kronomi-tag-button:focus {
     background: @base3_color;
+}
+
+.kronomi-button.flat:focus,
+.kronomi-button.flat.active,
+.kronomi-button.flat:hover {
+    background-color: shade(@theme_base_color, .9);
 }
 
 /* ==========================================================================

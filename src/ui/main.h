@@ -1,6 +1,6 @@
 #pragma once
 
-#include <gtk/gtk.h>
+#include <adwaita.h>
 #include "util/core.h"
 #include "util/mem.h"
 #include "util/string.h"

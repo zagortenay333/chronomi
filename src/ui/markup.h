@@ -1,6 +1,6 @@
 #pragma once
 
-#include <gtk/gtk.h>
+#include <adwaita.h>
 #include "ui/widgets.h"
 #include "util/core.h"
 #include "core/markup.h"
