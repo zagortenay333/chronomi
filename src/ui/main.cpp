@@ -53,10 +53,24 @@ static Void init (GtkApplication *app, Void *) {
     GtkIconTheme *theme = gtk_icon_theme_get_for_display(gdk_display_get_default());
     gtk_icon_theme_add_search_path(theme, "data/icons/");
 
-    GtkCssProvider *css_provider = gtk_css_provider_new();
-    gtk_css_provider_load_from_path(css_provider, "data/style.css");
-    gtk_style_context_add_provider_for_display(gdk_display_get_default(), GTK_STYLE_PROVIDER(css_provider), GTK_STYLE_PROVIDER_PRIORITY_USER);
-    g_object_unref(css_provider);
+    { // Css:
+        AdwStyleManager *style_manager = adw_style_manager_get_default();
+
+        g_signal_connect(style_manager, "notify::dark", G_CALLBACK(+[](AdwStyleManager *sm, GParamSpec *, Void *){
+            gtk_style_context_remove_provider_for_display(gdk_display_get_default(), GTK_STYLE_PROVIDER(main_context.css_provider));
+            g_object_unref(main_context.css_provider);
+
+            CString css_path = adw_style_manager_get_dark(sm) ? "data/css/style_dark.css" : "data/css/style_light.css";
+            main_context.css_provider = gtk_css_provider_new();
+            gtk_css_provider_load_from_path(main_context.css_provider, css_path);
+            gtk_style_context_add_provider_for_display(gdk_display_get_default(), GTK_STYLE_PROVIDER(main_context.css_provider), GTK_STYLE_PROVIDER_PRIORITY_USER);
+        }), 0);
+
+        CString css_path = adw_style_manager_get_dark(style_manager) ? "data/css/style_dark.css" : "data/css/style_light.css";
+        main_context.css_provider = gtk_css_provider_new();
+        gtk_css_provider_load_from_path(main_context.css_provider, css_path);
+        gtk_style_context_add_provider_for_display(gdk_display_get_default(), GTK_STYLE_PROVIDER(main_context.css_provider), GTK_STYLE_PROVIDER_PRIORITY_USER);
+    }
 
     main_context.window = gtk_application_window_new(app);
     gtk_window_set_title(GTK_WINDOW(main_context.window), "Kronomi");

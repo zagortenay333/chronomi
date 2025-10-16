@@ -20,6 +20,14 @@
 /* ==========================================================================
  * Top level
  * ========================================================================== */
+* {
+    transition-duration: 0;
+}
+
+.frame {
+    border-color: alpha(@theme_fg_color, .1);
+}
+
 .window {
     background: transparent;
 }
@@ -131,7 +139,7 @@ scale {
 .kronomi-button.flat:focus,
 .kronomi-button.flat.active,
 .kronomi-button.flat:hover {
-    background-color: shade(@theme_base_color, .9);
+    background-color: alpha(@theme_fg_color, .1);
 }
 
 /* ==========================================================================
@@ -436,7 +444,6 @@ scale {
 
 .kronomi-text-view:focus {
     box-shadow: 0 0 0 2px inset @theme_selected_bg_color;
-    transition-duration: 200ms;
     padding: 8px;
 }
 

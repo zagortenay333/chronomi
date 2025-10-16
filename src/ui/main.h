@@ -36,6 +36,8 @@ struct MainContext {
     Applet *visible_applet;
     Array<Applet*> applets;
 
+    GtkCssProvider *css_provider;
+
     String config_dir_path;
 
     String base_color;
