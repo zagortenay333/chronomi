@@ -1,0 +1,13 @@
+#!/bin/bash
+
+dir="$(readlink -f "$(dirname "$0")")"
+
+export GDK_PIXBUF_MODULE_FILE="${dir}/usr/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache"
+export GDK_PIXBUF_MODULEDIR="${dir}/usr/lib/gdk-pixbuf-2.0/2.10.0/loaders"
+export LD_LIBRARY_PATH="${dir}/usr/lib:${LD_LIBRARY_PATH}"
+
+EXEC="${dir}/usr/bin/kronomi"
+
+cd "$dir"
+
+exec "$EXEC" "$@"

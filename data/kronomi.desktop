@@ -1,9 +1,8 @@
 [Desktop Entry]
 Type=Application
 Name=Kronomi
-Comment=Kronomi GTK4 application
+Comment=All-in-one timer, stopwatch, pomodoro, alarm, todo, time tracker and flashcards app
 Exec=kronomi
-Icon=Kronomi
+Icon=kronomi
 Terminal=false
 Categories=Utility;
-Name[en_US]=kronomi.desktop
