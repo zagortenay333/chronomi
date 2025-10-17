@@ -9,4 +9,4 @@
 
 ## Download
 
-[Download the appimage](https://github.com/zagortenay333/kronomi/tree/master/data/Kronomi-x86_64.AppImage) and mark it as executable, then run.
+[Download the appimage](https://github.com/zagortenay333/kronomi/tree/master/bin/Kronomi-x86_64.AppImage) and mark it as executable, then run.
