@@ -15,3 +15,7 @@
 1. The project is written in c23, so you'll need newer versions of gcc/clang.
 2. Install the libraries: `sdl3`, `freetype`, and `harfbuzz`.
 3. Run `make release/debug/asan`.
+
+## Gnome-shell extension
+
+Check out the gnome-shell extension version of this app at: https://github.com/zagortenay333/cronomix.
