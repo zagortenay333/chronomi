@@ -7,11 +7,11 @@ mkdir -p AppDir/usr/bin
 
 cp -r ../data AppDir
 cp AppRun AppDir
-cp ../kronomi AppDir/usr/bin
-cp ../data/kronomi.png AppDir
-cp ../data/kronomi.desktop AppDir
+cp ../chronomi.bin AppDir/usr/bin
+cp ../data/chronomi.png AppDir
+cp ../data/chronomi.desktop AppDir
 
-./linuxdeploy-x86_64.AppImage --appdir AppDir --plugin gtk --output appimage
+./linuxdeploy-x86_64.AppImage --appdir AppDir --output appimage
 
 wait
 

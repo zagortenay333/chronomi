@@ -1,0 +1,26 @@
+version = 0 
+editor_width = 300.0
+editor_height = 150.0
+sort = [
+    {
+         ascending = false
+         by        = 0
+    }
+    {
+         ascending = false
+         by        = 3
+    }
+    {
+         ascending = true
+         by        = 1
+    }
+    {
+         ascending = true
+         by        = 2
+    }
+    {
+         ascending = false
+         by        = 4
+    }
+]
+decks = []

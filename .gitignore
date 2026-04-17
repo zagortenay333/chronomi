@@ -7,6 +7,5 @@
 *.bin
 *.exe
 *.gcda
-kronomi
 callgrind*
 heaptrack*

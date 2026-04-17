@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Chronomi
+Comment=All-in-one timer, stopwatch, pomodoro, alarm, todo, time tracker and flashcards app
+Exec=chronomi.bin
+Icon=chronomi
+Terminal=false
+Categories=Utility;

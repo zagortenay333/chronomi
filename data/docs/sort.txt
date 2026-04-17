@@ -1,0 +1,4 @@
+Tasks are sorted by the first attribute in this list.
+In case of a tie, by the second attribute and so on...
+
+[tip] You can drag-and-drop the items in this list.

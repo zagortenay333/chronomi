@@ -1,10 +1,10 @@
 #pragma once
 
-#include "util/core.h"
-#include "util/mem.h"
-#include "util/string.h"
+#include "base/core.h"
+#include "base/mem.h"
+#include "base/string.h"
 
-struct FsIter {
+istruct (FsIter) {
     Mem *mem;
     Bool is_directory;
     Bool skip_files;
@@ -14,20 +14,24 @@ struct FsIter {
     AString current_full_path;
 };
 
-U64     fs_file_size            (String path);
-Bool    fs_copy                 (String oldpath, String newpath);
-Bool    fs_make_dir             (String path);
-Bool    fs_move                 (String oldpath, String newpath);
-Bool    fs_delete               (String path);
-String  fs_get_full_path        (Mem *, String path);
-String  fs_current_working_dir  (Mem *);
-Bool    fs_make_file_executable (String path);
-Bool    fs_file_exists          (String path);
-Bool    fs_dir_exists           (String path);
-FsIter *fs_iter_new             (Mem *, String path, Bool, Bool);
-Bool    fs_iter_next            (FsIter *);
-Void    fs_iter_destroy         (FsIter *);
-Bool    fs_write_entire_file    (String path, String buf);
+U64     fs_file_size               (String path);
+Bool    fs_copy                    (String oldpath, String newpath);
+Bool    fs_make_file               (String path);
+Bool    fs_make_dir                (String path);
+Bool    fs_move                    (String oldpath, String newpath);
+Bool    fs_delete_file             (String path);
+String  fs_get_full_path           (Mem *, String path);
+String  fs_get_current_working_dir (Mem *);
+Bool    fs_make_file_executable    (String path);
+Bool    fs_file_exists             (String path);
+Bool    fs_dir_exists              (String path);
+FsIter *fs_iter_new                (Mem *, String path, Bool skip_dirs, Bool skip_files);
+Bool    fs_iter_next               (FsIter *);
+Void    fs_iter_destroy            (FsIter *);
+Bool    fs_write_entire_file       (String path, String buf);
+Void    fs_ensure_dir              (String path);
+Void    fs_ensure_file             (String path, String init_path);
+String  fs_get_home_dir            (Mem *);
 
 // The returned string is 0-terminated, but the 0-terminator
 // is not counted by String.count. The extra_space is padding

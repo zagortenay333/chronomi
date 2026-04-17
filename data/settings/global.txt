@@ -1,0 +1,19 @@
+version = 0
+icon_size = 16.0
+font_size = 12.0
+font_path_normal = "data/fonts/NotoSans-Regular.ttf"
+font_path_bold = "data/fonts/NotoSans-Bold.ttf"
+font_path_italic = "data/fonts/NotoSans-Italic.ttf"
+font_path_mono = "data/fonts/FiraMono-Bold Powerline.otf"
+font_path_icons = "data/fonts/icons.ttf"
+animation_time = 0.3
+show_titlebar = true
+tab_width = 4
+line_spacing = 2.0
+scrollbar_width = 8.0
+blur_strength = 3.0
+tile_tree = {
+    split = 0
+    active_tab = 0
+    tabs=[7]
+}

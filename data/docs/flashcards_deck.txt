@@ -1,0 +1,18 @@
+## Deck format
+
+A deck is a single text file in the following format:
+
+> session = 1 # In range [1, 32].
+  cards = [
+      {
+          bucket   = 3 # in range [0, 5]
+          question = "Hello"
+          answer   = "My Friend!"
+      }
+      {
+          bucket   = 3
+          question = "How are you?"
+          answer   = "Very good!"
+      }
+      ...
+  ]

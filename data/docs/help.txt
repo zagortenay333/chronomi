@@ -1,0 +1,62 @@
+# Intro
+
+This is an all-in-one timer, stopwatch, pomodoro, alarm, todo, time tracker
+and flashcards app.
+
+[important] This is currently alpha quality software.
+
+- The website: <www.github.com/zagortenay333/chronomi>.
+- Submit bug reports at: <www.github.com/zagortenay333/chronomi/issues>.
+
+# Config files
+
+The app stores configs in plain text files using a custom JSON-like
+format at <~/.config/chronomi/>.
+
+[important]
+  - Be careful when modifying these files by hand. In case of any error the
+    app will crash with a detailed error message emitted to the terminal.
+  - The app will not auto reload if you modify the files by hand.
+  - Each config file has a `version` variable. Don't modify it!
+
+When you modify the current theme from the settings applet the file
+<~/.config/chronomi/theme.txt> will get modified. When you are done
+you can copy this file to save your theme. If you pick one of the
+preset themes, this file will be modified.
+
+The config format is roughly JSON without commas and semicolons:
+
+> string_var  = "hello world"
+  float32_var = 16.0
+  int64_var   = 16
+  array_var   = [1 2 3] # Here is a comment
+  struct_var  = { foo=3 bar="asdf" baz=[1 2 3] }
+
+There is no support for enums so some values such as the tabs field
+in <~/.config/chronomi/global.txt> are hardcoded. The corresponding
+enum can be found in the source code.
+
+# Icons
+
+To modify the icons you must change the icon font from the settings.
+
+The default icons used in this app can also be found in svg form inside
+the `data/icons` folder. There are various tools you can find that can
+generate an icon font from them.
+
+The icon font must have the glyphs starting at a specific value and in
+a specific order. These are given by the `UiIcon` enum in the source code.
+
+# Applets
+
+You can open different applets by pressing the plus button near a tab.
+You can drag-and-drop the tabs to spread the applets into tiles.
+
+The state of your tile layout is stored in <~/.config/chronomi/global.txt>,
+specifically in the `tile_tree` variable. There is no need to modify it by
+hand as it gets automatically updated whenever you change the layout.
+
+# More help
+
+Help dialogs are placed throughout the app for more info. Look for the
+question mark icon.
