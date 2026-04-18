@@ -138,6 +138,21 @@ static Void build_tabs_panel (UiTile *info, UiTileNode *node) {
                         ui_style_vec4(UI_BG_COLOR, ui->theme->bg_color_z3);
                     }
 
+                    if (tab->signals.hovered) {
+                        ui_push_clip(tab, true);
+                        ui_box(UI_BOX_CLICK_THROUGH, "highlight") {
+                            F32 s = tab->rect.h/8;
+                            ui_style_f32(UI_EDGE_SOFTNESS, 60);
+                            ui_style_vec4(UI_RADIUS, vec4(s, s, s, s));
+                            ui_style_f32(UI_FLOAT_X, ui->mouse.x - tab->rect.x - s);
+                            ui_style_f32(UI_FLOAT_Y, ui->mouse.y - tab->rect.y - s);
+                            ui_style_vec4(UI_BG_COLOR, ui->theme->button_highlight_color);
+                            ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PIXELS, 2*s, 1});
+                            ui_style_size(UI_HEIGHT, (UiSize){UI_SIZE_PIXELS, 2*s, 1});
+                        }
+                        ui_pop_clip();
+                    }
+
                     if (tab->signals.clicked && ui->event->key == KEY_MOUSE_LEFT) {
                         node->active_tab_idx = ARRAY_IDX;
                         info->tree_modified = true;

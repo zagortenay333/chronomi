@@ -956,7 +956,7 @@ Void ui_frame (Void(*app_build)(), F64 dt) {
                 ui_style_vec4(UI_OUTSET_SHADOW_COLOR, vec4(0, 0, 0, .6));
 
                 if (ui->config->show_titlebar) {
-                    ui->titlebar = ui_box(0, "titlebar") {
+                    ui->titlebar = ui_box(UI_BOX_REACTIVE, "titlebar") {
                         ui_style_vec4(UI_RADIUS, vec4(r, r, 0, 0));
                         ui_style_u32(UI_ALIGN_Y, UI_ALIGN_MIDDLE);
                         ui_style_f32(UI_SPACING, ui->theme->spacing);
@@ -966,6 +966,21 @@ Void ui_frame (Void(*app_build)(), F64 dt) {
                         ui_style_vec4(UI_BORDER_WIDTHS, vec4(0, 0, 0, b));
                         ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PCT_PARENT, 1, 0});
                         ui_style_size(UI_HEIGHT, (UiSize){UI_SIZE_CHILDREN_SUM, 0, 1});
+
+                        if (ui->titlebar->signals.hovered) {
+                            ui_push_clip(ui->titlebar, true);
+                            ui_box(UI_BOX_CLICK_THROUGH, "highlight") {
+                                F32 s = ui->titlebar->rect.h/8;
+                                ui_style_f32(UI_EDGE_SOFTNESS, 60);
+                                ui_style_vec4(UI_RADIUS, vec4(s, s, s, s));
+                                ui_style_f32(UI_FLOAT_X, ui->mouse.x - ui->titlebar->rect.x - s);
+                                ui_style_f32(UI_FLOAT_Y, ui->mouse.y - ui->titlebar->rect.y - s);
+                                ui_style_vec4(UI_BG_COLOR, ui->theme->button_highlight_color);
+                                ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PIXELS, 2*s, 1});
+                                ui_style_size(UI_HEIGHT, (UiSize){UI_SIZE_PIXELS, 2*s, 1});
+                            }
+                            ui_pop_clip();
+                        }
 
                         ui_box(UI_BOX_CLICK_THROUGH, "title") {
                             ui_style_f32(UI_FLOAT_X, 0);
