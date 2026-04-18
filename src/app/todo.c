@@ -785,8 +785,13 @@ static Void build_view_sort () {
                 ui_style_vec4(UI_TEXT_COLOR, ui->theme->text_color_blue);
             }
 
+            ui_style_rule(".button.focus") {
+                ui_style_vec4(UI_BORDER_COLOR, ui->theme->border_color_focus);
+                ui_style_vec4(UI_BORDER_WIDTHS, ui->theme->border_width_focus);
+            }
+
             array_iter (sort, &context->sorts) {
-                UiBox *box = ui_box_fmt(UI_BOX_REACTIVE, "sort%lu", ARRAY_IDX) {
+                UiBox *box = ui_box_fmt(UI_BOX_CAN_FOCUS|UI_BOX_REACTIVE, "sort%lu", ARRAY_IDX) {
                     ui_tag("item");
 
                     if (view->dragging && ui_within_box(box->rect, ui->mouse)) {
@@ -806,18 +811,14 @@ static Void build_view_sort () {
                                 ui_tag("button");
                                 ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_PAN_UP);
                                 up_button->next_style.size.width.strictness = 1;
-                                if (up_button->signals.clicked && ARRAY_IDX > 0) {
-                                    push_command(.tag=CMD_CHANGE_SORT, .idx=ARRAY_IDX, .idx2=ARRAY_IDX-1);
-                                }
+                                if (up_button->signals.clicked && ARRAY_IDX > 0) push_command(.tag=CMD_CHANGE_SORT, .idx=ARRAY_IDX, .idx2=ARRAY_IDX-1);
                             }
 
                             UiBox *down_button = ui_box(UI_BOX_CAN_FOCUS|UI_BOX_REACTIVE, "down") {
                                 ui_tag("button");
                                 ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_PAN_DOWN);
                                 down_button->next_style.size.width.strictness = 1;
-                                if (down_button->signals.clicked && !ARRAY_ITER_DONE) {
-                                    push_command(.tag=CMD_CHANGE_SORT, .idx=ARRAY_IDX, .idx2=ARRAY_IDX+1);
-                                }
+                                if (down_button->signals.clicked && !ARRAY_ITER_DONE) push_command(.tag=CMD_CHANGE_SORT, .idx=ARRAY_IDX, .idx2=ARRAY_IDX+1);
                             }
                         }
 
