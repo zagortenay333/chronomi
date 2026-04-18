@@ -465,11 +465,17 @@ static Void build_view_main () {
         ui_style_rule(".button:first") { ui_style_vec4(UI_RADIUS, vec4(ui->theme->radius.x, ui->theme->radius.x, 0, 0)); }
         ui_style_rule(".button:last")  { ui_style_vec4(UI_RADIUS, vec4(0, 0, ui->theme->radius.x, ui->theme->radius.x)); }
 
-        UiBox *add_button = ui_button(str("add")) { ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_PLUS); }
-        if (add_button->signals.clicked) push_command(.tag=CMD_VIEW_EDITOR, .idx=ARRAY_NIL_IDX);
+        UiBox *add_button = ui_button(str("add")) {
+            ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_PLUS);
+            if (add_button->signals.clicked) push_command(.tag=CMD_VIEW_EDITOR, .idx=ARRAY_NIL_IDX);
+            if (add_button->signals.hovered) { ui_tooltip(str("tooltip")) ui_label(0, "tooltip", str("Add timer")); }
+        }
 
-        UiBox *search_button = ui_button(str("search")) { ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_SEARCH); }
-        if (search_button->signals.clicked) push_command(.tag=CMD_VIEW_SEARCH);
+        UiBox *search_button = ui_button(str("search")) {
+            ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_SEARCH);
+            if (search_button->signals.clicked) push_command(.tag=CMD_VIEW_SEARCH);
+            if (search_button->signals.hovered) { ui_tooltip(str("tooltip")) ui_label(0, "tooltip", str("Search timers")); }
+        }
     }
 
     ui_scroll_box(str("cards"), true) {

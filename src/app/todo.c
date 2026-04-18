@@ -978,17 +978,29 @@ static Void build_view_kanban () {
         ui_style_rule(".button:first") { ui_style_vec4(UI_RADIUS, vec4(ui->theme->radius.x, ui->theme->radius.x, 0, 0)); }
         ui_style_rule(".button:last")  { ui_style_vec4(UI_RADIUS, vec4(0, 0, ui->theme->radius.x, ui->theme->radius.x)); }
 
-        UiBox *add_button = ui_button(str("add")) { ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_PLUS); }
-        if (add_button->signals.clicked) push_command(.tag=CMD_VIEW_EDITOR, .idx=ARRAY_NIL_IDX);
+        UiBox *add_button = ui_button(str("add")) {
+            ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_PLUS);
+            if (add_button->signals.clicked) push_command(.tag=CMD_VIEW_EDITOR, .idx=ARRAY_NIL_IDX);
+            if (add_button->signals.hovered) { ui_tooltip(str("tooltip")) ui_label(0, "tooltip", str("Add task")); }
+        }
 
-        UiBox *search_button = ui_button(str("search")) { ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_SEARCH); }
-        if (search_button->signals.clicked) push_command(.tag=CMD_VIEW_SEARCH);
+        UiBox *search_button = ui_button(str("search")) {
+            ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_SEARCH);
+            if (search_button->signals.clicked) push_command(.tag=CMD_VIEW_SEARCH);
+            if (search_button->signals.hovered) { ui_tooltip(str("tooltip")) ui_label(0, "tooltip", str("Search tasks")); }
+        }
 
-        UiBox *deck_button = ui_button(str("deck")) { ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_FOLDER); }
-        if (deck_button->signals.clicked) push_command(.tag=CMD_VIEW_DECK_BROWSER);
+        UiBox *deck_button = ui_button(str("deck")) {
+            ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_FOLDER);
+            if (deck_button->signals.clicked) push_command(.tag=CMD_VIEW_DECK_BROWSER);
+            if (deck_button->signals.hovered) { ui_tooltip(str("tooltip")) ui_label(0, "tooltip", str("Browse decks")); }
+        }
 
-        UiBox *sort_button = ui_button(str("sort")) { ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_SORT_ASC); }
-        if (sort_button->signals.clicked) push_command(.tag=CMD_VIEW_SORT);
+        UiBox *sort_button = ui_button(str("sort")) {
+            ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_SORT_ASC);
+            if (sort_button->signals.clicked) push_command(.tag=CMD_VIEW_SORT);
+            if (sort_button->signals.hovered) { ui_tooltip(str("tooltip")) ui_label(0, "tooltip", str("Sort tasks")); }
+        }
     }
 
     ui_scroll_box(str("cards"), true) {

@@ -833,19 +833,36 @@ static Void build_view_main () {
         ui_style_rule(".button:first") { ui_style_vec4(UI_RADIUS, vec4(ui->theme->radius.x, ui->theme->radius.x, 0, 0)); }
         ui_style_rule(".button:last")  { ui_style_vec4(UI_RADIUS, vec4(0, 0, ui->theme->radius.x, ui->theme->radius.x)); }
 
-        UiBox *add_button = ui_button(str("add")) { ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_PLUS); }
-        if (add_button->signals.clicked) push_command(.tag=CMD_VIEW_EDIT_CARD, .idx=ARRAY_NIL_IDX);
+        UiBox *add_button = ui_button(str("add")) {
+            ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_PLUS);
+            if (add_button->signals.clicked) push_command(.tag=CMD_VIEW_EDIT_CARD, .idx=ARRAY_NIL_IDX);
+            if (add_button->signals.hovered) { ui_tooltip(str("tooltip")) ui_label(0, "tooltip", str("Add flashcard")); }
+        }
 
-        UiBox *search_button = ui_button(str("search")) { ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_SEARCH); }
-        if (search_button->signals.clicked) push_command(.tag=CMD_VIEW_SEARCH_CARDS);
+        UiBox *search_button = ui_button(str("search")) {
+            ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_SEARCH);
+            if (search_button->signals.hovered) { ui_tooltip(str("tooltip")) ui_label(0, "tooltip", str("Search flashcards")); }
+            if (search_button->signals.clicked) push_command(.tag=CMD_VIEW_SEARCH_CARDS);
+        }
 
-        UiBox *deck_button = ui_button(str("deck")) { ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_FOLDER); }
-        if (deck_button->signals.clicked) push_command(.tag=CMD_VIEW_DECK_BROWSER);
+        UiBox *deck_button = ui_button(str("deck")) {
+            ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_FOLDER);
+            if (deck_button->signals.clicked) push_command(.tag=CMD_VIEW_DECK_BROWSER);
+            if (deck_button->signals.hovered) { ui_tooltip(str("tooltip")) ui_label(0, "tooltip", str("Browse decks")); }
+        }
 
-        UiBox *exam_button = ui_button(str("exam")) { ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_EXAM); }
-        if (exam_button->signals.clicked) push_command(.tag=CMD_VIEW_EXAM);
+        UiBox *exam_button = ui_button(str("exam")) {
+            ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_EXAM);
+            if (exam_button->signals.clicked) push_command(.tag=CMD_VIEW_EXAM);
+            if (exam_button->signals.hovered) { ui_tooltip(str("tooltip")) ui_label(0, "tooltip", str("Start exam")); }
+        }
 
-        ui_button_info_popup(str("help"), true, str("data/docs/flashcards.txt"));
+        UiBox *info_button = ui_button_info_popup(str("help"), true, str("data/docs/flashcards.txt"));
+        if (info_button->signals.hovered) {
+            ui_parent(info_button) {
+                ui_tooltip(str("tooltip")) ui_label(0, "tooltip", str("Info"));
+            }
+        }
     }
 
     ui_scroll_box(str("cards"), true) {
