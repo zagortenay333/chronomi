@@ -1730,7 +1730,7 @@ UiBox *ui_file_picker (String id, Buf *buf, Bool *shown, Bool multiple, Bool dir
 
             UiBox *entry = ui_entry(str("entry"), info->search, 64, str(""));
             UiBox *inner = array_get(&entry->children, 0);
-            ui_style_box_size(inner, UI_WIDTH, (UiSize){UI_SIZE_PCT_PARENT, 1, 1});
+            ui_style_box_size(inner, UI_WIDTH, (UiSize){UI_SIZE_PCT_PARENT, 1, 0});
             search_text_box_info = ui_get_box_data(inner, 0, 0);
             if (entry->start_frame == ui->frame) {
                 ui_grab_focus(array_get(&inner->children, 0));
