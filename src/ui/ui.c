@@ -825,10 +825,8 @@ static Void draw_box (UiBox *box) {
         dr_scissor((Rect){r.x, win_height - r.y - r.h, r.w, r.h});
     }
 
-    array_push(&ui->box_stack, box); // For use_style_var_get().
     if (box->draw_fn) box->draw_fn(box);
     array_iter (c, &box->children) draw_box(c);
-    array_pop(&ui->box_stack);
 
     if (box->flags & UI_BOX_CLIPPING) {
         dr_flush_vertices();
