@@ -11,5 +11,14 @@ Sound files picked from:
 
 Font files are picked from:
 
- - https://github.com/powerline/fonts
- - https://fonts.google.com/noto/specimen/Noto+Sans/license
+  - https://github.com/powerline/fonts
+  - https://fonts.google.com/noto/specimen/Noto+Sans/license
+
+The icons font is built using the awesome:
+
+  - https://icomoon.io/ 
+
+Misc useful resources:
+
+  - https://www.dgtlgrove.com/t/ui
+  - https://orca-app.dev/
