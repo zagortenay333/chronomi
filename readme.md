@@ -1,6 +1,6 @@
 # Chronomi
 
-**All-in-one timer, stopwatch, pomodoro, alarm, todo, time tracker and flashcards app.**
+**All-in-one timer, stopwatch, pomodoro, alarm, todo, and flashcards linux app.**
 
 ![preview](./data/screenshots/screenshot.png)
 
