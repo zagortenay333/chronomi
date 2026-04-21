@@ -6,7 +6,7 @@
 
 ## Download
 
-1. [Download the app](https://github.com/zagortenay333/chronomi/tree/main/bin/Chronomi-x86_64.AppImage).
+1. [Download the app](https://github.com/zagortenay333/chronomi/releases).
 2. Mark the downloaded file as executable.
 3. Run the file.
 
