@@ -48,7 +48,7 @@ asan: LDFLAGS += -fsanitize=address,undefined
 asan: $(EXE)
 
 appimage:
-	./bin/build_appimage
+	./scripts/build_appimage
 
 pp:
 	$(foreach f, $(SRC_FILES), $(CC) -E -P $(CFLAGS) $(f) > $(f:.c=.pp);)

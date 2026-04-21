@@ -11,7 +11,7 @@ cp ../chronomi.bin AppDir/usr/bin
 cp ../data/chronomi.png AppDir
 cp ../data/chronomi.desktop AppDir
 
-./linuxdeploy-x86_64.AppImage --appdir AppDir --output appimage
+./linuxdeploy-x86_64.AppImage --appdir=AppDir --output=appimage
 
 wait
 
