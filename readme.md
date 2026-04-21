@@ -12,7 +12,7 @@
 
 ## Compile
 
-1. The project is written in c23, so you'll need newer versions of gcc/clang.
+1. The project is written in `C23`, so you'll need newer versions of gcc/clang.
 2. Install the libraries: `sdl3`, `freetype`, and `harfbuzz`.
 3. Run `make release/debug/asan`.
 
