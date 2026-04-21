@@ -33,8 +33,9 @@ istruct (App) {
 
 extern App *app;
 
-Void app_init          ();
-Void app_build         ();
-Void app_config_save   ();
-Void app_load_ui_theme (String filepath);
-Void app_sync_scroll   (UiBox *scrollbox, UiBox *editor, UiBox *markup, U64 *prev_cursor);
+Void   app_init             ();
+Void   app_build            ();
+Void   app_config_save      ();
+Void   app_load_ui_theme    (String filepath);
+Void   app_sync_scroll      (UiBox *scrollbox, UiBox *editor, UiBox *markup, U64 *prev_cursor);
+UiBox *app_show_more_button (String id, U64 *idx, U64 count);

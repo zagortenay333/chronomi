@@ -19,6 +19,22 @@
 
 App *app;
 
+UiBox *app_show_more_button (String id, U64 *idx, U64 count) {
+    U64 increment = 50;
+
+    if (*idx == 0 && count) *idx = increment;
+    if (*idx >= count) return 0;
+
+    UiBox *show_more_button = ui_button(id) {
+        ui_style_u32(UI_ALIGN_X, UI_ALIGN_MIDDLE);
+        ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PIXELS, 30*ui->config->font_size, 1});
+        ui_label(UI_BOX_CLICK_THROUGH, "label", str("Show more"));
+        if (show_more_button->signals.clicked) *idx = sat_add64(*idx, increment);
+    }
+
+    return show_more_button;
+}
+
 Void app_sync_scroll (UiBox *scrollbox, UiBox *editor, UiBox *markup, U64 *prev_cursor) {
     UiTextEditorInfo *editor_info = ui_get_box_data(editor, 0, 0);
     MarkupView *markup_info = ui_get_box_data(markup, 0, 0);

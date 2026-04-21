@@ -42,6 +42,7 @@ istruct (KanbanColumn) {
     MarkupAst *filter_node;
     String filter_text;
     ArrayU64 tasks;
+    U64 show_more_idx;
 };
 
 istruct (SearchResult) {
@@ -70,6 +71,7 @@ istruct (View) {
         struct {
             Bool dragging;
             U64 draggee;
+            U64 show_more;
         } sort;
 
         struct {
@@ -82,6 +84,7 @@ istruct (View) {
         struct {
             Buf *buf;
             U64 buf_version;
+            U64 show_more_idx;
             Bool delete_searched;
             ArrayU64 searched;
         } search;
@@ -745,7 +748,14 @@ static Void build_view_search () {
         }
 
         Bool deleted = false;
-        array_iter (task_idx, &view->searched) build_task(task_idx, &deleted);
+
+        array_iter (task_idx, &view->searched) {
+            if (ARRAY_IDX == view->show_more_idx) break;
+            build_task(task_idx, &deleted);
+        }
+
+        app_show_more_button(str("show_more"), &view->show_more_idx, view->searched.count);
+
         if (deleted) view->buf_version--; // To refresh the searched array.
     }
 }
@@ -872,7 +882,14 @@ static Void build_view_sort () {
         ui_style_vec2(UI_PADDING, ui->theme->padding);
         ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PCT_PARENT, 1, 0});
         ui_style_size(UI_HEIGHT, (UiSize){UI_SIZE_PCT_PARENT, 1, 0});
-        array_iter (_, &context->tasks, *) { _; build_task(ARRAY_IDX, 0); }
+
+        array_iter (_, &context->tasks, *) {
+            _;
+            if (ARRAY_IDX == view->show_more) break;
+            build_task(ARRAY_IDX, 0);
+        }
+
+        app_show_more_button(str("show_more"), &view->show_more, context->tasks.count);
     }
 
     if (view->dragging && ui->event->tag == EVENT_KEY_RELEASE && ui->event->key == KEY_MOUSE_LEFT) {
@@ -1028,7 +1045,12 @@ static Void build_view_kanban () {
                         }
                     }
 
-                    array_iter (task, &column->tasks) build_task(task, 0);
+                    array_iter (task, &column->tasks) {
+                        if (ARRAY_IDX == column->show_more_idx) break;
+                        build_task(task, 0);
+                    }
+
+                    app_show_more_button(str("show_more"), &column->show_more_idx, column->tasks.count);
                 }
             }
         }

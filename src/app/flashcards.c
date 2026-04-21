@@ -38,6 +38,10 @@ istruct (View) {
 
     union {
         struct {
+            U64 show_more_idx;
+        } main;
+
+        struct {
             Buf *question_buf;
             Buf *answer_buf;
             U64 bucket;
@@ -53,6 +57,7 @@ istruct (View) {
             I64 move_to_bucket;
             Buf *search_buf;
             U64 search_buf_version;
+            U64 show_more_idx;
             Array(SearchResult) searched_cards;
         } search_cards;
 
@@ -406,7 +411,14 @@ static Void build_view_search_cards () {
         if (view->fuzzy_search) array_sort_cmp(&view->searched_cards, cmp_search_results);
 
         Bool card_deleted = false;
-        array_iter (card, &view->searched_cards, *) build_card(card->idx, &card_deleted, true);
+
+        array_iter (card, &view->searched_cards, *) {
+            if (ARRAY_IDX == view->show_more_idx) break;
+            build_card(card->idx, &card_deleted, true);
+        }
+
+        app_show_more_button(str("show_more"), &view->show_more_idx, view->searched_cards.count);
+
         if (card_deleted) view->search_buf_version--; // To refresh the searched_cards array.
     }
 }
@@ -824,6 +836,8 @@ static Void build_view_card_editor () {
 }
 
 static Void build_view_main () {
+    Auto view = &context->view.main;
+
     ui_box(0, "navbox") {
         ui_style_u32(UI_AXIS, UI_AXIS_VERTICAL);
         ui_style_vec2(UI_PADDING, ui->theme->padding);
@@ -872,7 +886,14 @@ static Void build_view_main () {
         ui_style_u32(UI_ALIGN_X, UI_ALIGN_MIDDLE);
         ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PCT_PARENT, 1, 0});
         ui_style_size(UI_HEIGHT, (UiSize){UI_SIZE_PCT_PARENT, 1, 0});
-        array_iter (_, &context->cards, *) { _; build_card(ARRAY_IDX, 0, true); }
+
+        array_iter (_, &context->cards, *) {
+            _;
+            if (ARRAY_IDX == view->show_more_idx) break;
+            build_card(ARRAY_IDX, 0, true);
+        }
+
+        app_show_more_button(str("show_more"), &view->show_more_idx, context->cards.count);
     }
 }
 
