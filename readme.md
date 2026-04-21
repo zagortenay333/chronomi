@@ -6,9 +6,9 @@
 
 ## Download
 
-1. [Download the app](https://github.com/zagortenay333/chronomi/releases).
+1. [Download the appimage file](https://github.com/zagortenay333/chronomi/releases).
 2. Mark the downloaded file as executable.
-3. Run the file.
+3. Run the program.
 
 ## Compile
 
