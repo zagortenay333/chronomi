@@ -344,25 +344,49 @@ static Void build_block (MarkupView *info, MarkupAst *node) {
             ui_tag("table");
             ui_style_u32(UI_AXIS, UI_AXIS_VERTICAL);
 
+            F32 r = ui->theme->radius.x;
+            F32 b = ui->theme->border_width.x;
+
             array_iter (row, &node->children) {
+                U64 row_idx = ARRAY_IDX;
+
                 // Add missing cells in this row in the form of dummy cells.
                 U64 prev_row_length = row->children.count;
                 while (row->children.count < col_count) array_push(&row->children, dummy_cell);
 
                 ui_box_fmt(UI_BOX_INVISIBLE_BG, "row%lu", ARRAY_IDX) {
                     array_iter (cell, &row->children) {
-                        if (ARRAY_IDX == col_count) break; // Ignore excess cells.
+                        U64 cell_idx = ARRAY_IDX;
+                        if (cell_idx == col_count) break; // Ignore excess cells.
 
                         UiBox *cell_box = ui_box_fmt(0, "cell%lu", ARRAY_IDX) {
-                            ui_tag("cell");
-                            ui_tag("block");
-                            cell_box->size_fn = size_table_cell;
                             ui_style_size(UI_HEIGHT, (UiSize){UI_SIZE_CUSTOM, 1, 1});
                             ui_style_u32(UI_AXIS, UI_AXIS_VERTICAL);
                             ui_style_vec2(UI_PADDING, ui->theme->padding);
                             ui_style_vec4(UI_BG_COLOR, ui->theme->bg_color_z3);
                             ui_style_vec4(UI_BORDER_COLOR, ui->theme->border_color);
-                            ui_style_vec4(UI_BORDER_WIDTHS, ui->theme->border_width);
+
+                            Vec4 borders = {0, b, b, 0};
+                            if (row_idx == node->children.count-1 && cell_idx == col_count-1) {
+                                borders.x = b;
+                                borders.w = b;
+                            } else if (row_idx == node->children.count-1) {
+                                borders.w = b;
+                            } else if (cell_idx == col_count-1) {
+                                borders.x = b;
+                            }
+                            ui_style_vec4(UI_BORDER_WIDTHS, borders);
+
+                            Vec4 corners = {};
+                            if (!row_idx && !cell_idx)                                        corners.y = r;
+                            if (row_idx == node->children.count-1 && !cell_idx)               corners.w = r;
+                            if (!row_idx && cell_idx == col_count-1)                          corners.x = r;
+                            if (row_idx == node->children.count-1 && cell_idx == col_count-1) corners.z = r;
+                            ui_style_vec4(UI_RADIUS, corners);
+
+                            ui_tag("cell");
+                            ui_tag("block");
+                            cell_box->size_fn = size_table_cell;
                             array_iter (child, &cell->children) build_block(info, child);
                             if (info->build_ast_to_box) map_add(&info->ast_to_box, cell, cell_box);
                         }
