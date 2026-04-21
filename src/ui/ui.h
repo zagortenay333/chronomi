@@ -14,6 +14,8 @@ istruct (UiConfig) {
     String font_path_italic;
     String font_path_mono;
     String font_path_icons;
+    U64 show_more_inc;
+    U64 card_width;
     F32 animation_time;
     Bool show_titlebar;
     U32 tab_width;

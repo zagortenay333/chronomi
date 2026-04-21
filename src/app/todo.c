@@ -637,7 +637,7 @@ static Void build_view_editor () {
                 }
             }
 
-            ui_button_info_popup(str("help_button"), true, str("data/docs/todo.txt"));
+            ui_button_info_popup(str("help_button"), true, str("data/docs/todo.txt"), true);
         }
     }
 
@@ -698,7 +698,7 @@ static Void build_view_search () {
         ui_box(0, "search_box") {
             ui_style_f32(UI_SPACING, ui->theme->spacing);
             ui_entry(str("entry"), view->buf, -1, str("Filter expression..."));
-            ui_button_info_popup(str("help_button"), true, str("data/docs/filters.txt"));
+            ui_button_info_popup(str("help_button"), true, str("data/docs/filters.txt"), true);
         }
 
         ui_box(UI_BOX_INVISIBLE_BG, "row_group") {
@@ -871,7 +871,7 @@ static Void build_view_sort () {
                 if (close_button->signals.clicked) push_command(.tag=CMD_VIEW_KANBAN);
             }
 
-            ui_button_info_popup(str("help_button"), true, str("data/docs/sort.txt"));
+            ui_button_info_popup(str("help_button"), true, str("data/docs/sort.txt"), true);
         }
     }
 
@@ -927,7 +927,7 @@ static Void build_view_deck_browser () {
                 }
             }
 
-            ui_button_info_popup(str("help_button"), true, str("data/docs/todo.txt"));
+            ui_button_info_popup(str("help_button"), true, str("data/docs/todo.txt"), true);
         }
     }
 

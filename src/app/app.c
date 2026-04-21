@@ -27,7 +27,7 @@ UiBox *app_show_more_button (String id, U64 *idx, U64 count) {
 
     UiBox *show_more_button = ui_button(id) {
         ui_style_u32(UI_ALIGN_X, UI_ALIGN_MIDDLE);
-        ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PIXELS, 30*ui->config->font_size, 1});
+        ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PIXELS, ui->config->card_width, 1});
         ui_label(UI_BOX_CLICK_THROUGH, "label", str("Show more"));
         if (show_more_button->signals.clicked) *idx = sat_add64(*idx, increment);
     }
@@ -130,12 +130,10 @@ Void app_load_ui_theme (String filepath) {
     app->ui_theme.in_shadow_color        = config_get_vec4(cfg, cfg->root, "in_shadow_color");
     app->ui_theme.out_shadow_width       = config_get_f64(cfg, cfg->root, "out_shadow_width");
     app->ui_theme.out_shadow_color       = config_get_vec4(cfg, cfg->root, "out_shadow_color");
-
     app->ui_theme.bg_titlebar            = config_get_vec4(cfg, cfg->root, "bg_titlebar");
     app->ui_theme.padding_titlebar       = config_get_vec2(cfg, cfg->root, "padding_titlebar");
     app->ui_theme.radius_titlebar        = config_get_f64(cfg, cfg->root, "radius_titlebar");
     app->ui_theme.border_color_titlebar  = config_get_vec4(cfg, cfg->root, "border_color_titlebar");
-
     app->ui_theme.text_color_normal      = config_get_vec4(cfg, cfg->root, "text_color_normal");
     app->ui_theme.text_color_faint       = config_get_vec4(cfg, cfg->root, "text_color_faint");
     app->ui_theme.text_color_inactive    = config_get_vec4(cfg, cfg->root, "text_color_inactive");
@@ -171,6 +169,8 @@ Void app_config_save () {
     astr_push_fmt(&astr, "font_path_italic = \"%.*s\"\n", STR(app->ui_config.font_path_italic));
     astr_push_fmt(&astr, "font_path_mono = \"%.*s\"\n", STR(app->ui_config.font_path_mono));
     astr_push_fmt(&astr, "font_path_icons = \"%.*s\"\n", STR(app->ui_config.font_path_icons));
+    astr_push_fmt(&astr, "show_more_inc = %lu\n", app->ui_config.show_more_inc);
+    astr_push_fmt(&astr, "card_width = %lu\n", app->ui_config.card_width);
     astr_push_fmt(&astr, "animation_time = %.2f\n", app->ui_config.animation_time);
     astr_push_fmt(&astr, "show_titlebar = %s\n", app->ui_config.show_titlebar ? "true" : "false");
     astr_push_fmt(&astr, "tab_width = %u\n", app->ui_config.tab_width);
@@ -252,6 +252,8 @@ static Void load_config () {
     app->ui_config.font_path_italic = config_get_string(cfg, cfg->root, "font_path_italic", app->config_mem);
     app->ui_config.font_path_mono   = config_get_string(cfg, cfg->root, "font_path_mono", app->config_mem);
     app->ui_config.font_path_icons  = config_get_string(cfg, cfg->root, "font_path_icons", app->config_mem);
+    app->ui_config.show_more_inc    = config_get_u64(cfg, cfg->root, "show_more_inc");
+    app->ui_config.card_width       = config_get_u64(cfg, cfg->root, "card_width");
     app->ui_config.animation_time   = config_get_f64(cfg, cfg->root, "animation_time");
     app->ui_config.show_titlebar    = config_get_bool(cfg, cfg->root, "show_titlebar");
     app->ui_config.tab_width        = config_get_u64(cfg, cfg->root, "tab_width");
@@ -292,7 +294,7 @@ static Void build_global_style_rules () {
     }
 
     ui_style_rule(".card") {
-        ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PIXELS, 30*ui->config->font_size, 1});
+        ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PIXELS, ui->config->card_width, 1});
         ui_style_u32(UI_AXIS, UI_AXIS_VERTICAL);
         ui_style_vec4(UI_RADIUS, ui->theme->radius);
         ui_style_vec4(UI_BG_COLOR, ui->theme->bg_color_z3);
@@ -358,7 +360,7 @@ Void app_init () {
 
     ui_init(&app->ui_config, &app->ui_theme);
 
-    app->config_version = 0;
+    app->config_version = 1;
     app->config_mem = cast(Mem*, arena_new(mem_root, 1*KB));
 
     { // Build config file/dir paths:

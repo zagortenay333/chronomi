@@ -438,13 +438,13 @@ static Void build_view_deck_browser () {
             ui_box(0, "import") {
                 ui_tag("row");
                 ui_file_picker_entry(str("picker"), view->import_buf, str("Import deck files..."), -1, true, false, (String){});
-                ui_button_info_popup(str("help_button"), true, str("data/docs/flashcards_deck.txt"));
+                ui_button_info_popup(str("help_button"), true, str("data/docs/flashcards_deck.txt"), true);
             }
 
             ui_box(0, "export") {
                 ui_tag("row");
                 ui_file_picker_entry(str("picker"), view->export_buf, str("Export decks to..."), -1, false, true, (String){});
-                ui_button_info_popup(str("help_button"), true, str("data/docs/flashcards_csv.txt"));
+                ui_button_info_popup(str("help_button"), true, str("data/docs/flashcards_csv.txt"), true);
             }
         }
 
@@ -871,7 +871,7 @@ static Void build_view_main () {
             if (exam_button->signals.hovered) { ui_tooltip(str("tooltip")) ui_label(0, "tooltip", str("Start exam")); }
         }
 
-        UiBox *info_button = ui_button_info_popup(str("help"), true, str("data/docs/flashcards.txt"));
+        UiBox *info_button = ui_button_info_popup(str("help"), true, str("data/docs/flashcards.txt"), true);
         if (info_button->signals.hovered) {
             ui_parent(info_button) {
                 ui_tooltip(str("tooltip")) ui_label(0, "tooltip", str("Info"));

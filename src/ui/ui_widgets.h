@@ -30,7 +30,7 @@ UiBox *ui_button_group_push    (String id);
 Void   ui_button_group_pop     ();
 UiBox *ui_button_push          (String id);
 Void   ui_button_pop           ();
-UiBox *ui_button_info_popup    (String id, Bool sideways, String markup_filepath);
+UiBox *ui_button_info_popup    (String id, Bool sideways, String markup_filepath, Bool is_filepath);
 UiBox *ui_button_label_str     (String id, String label);
 UiBox *ui_button_label         (CString id);
 UiBox *ui_vscroll_bar          (String id, Rect rect, F32 ratio, F32 *val);

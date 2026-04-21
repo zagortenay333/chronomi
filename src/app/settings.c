@@ -94,6 +94,36 @@ static Void build_global_settings () {
             ui->config->font_path_icons = buf_get_str(buf, app->config_mem);
         }
 
+        ui_box(0, "show_more_inc") {
+            ui_tag("row");
+            ui_label(0, "title", str("Show more increment"));
+            ui_hspacer();
+
+            String info = str("Number of extra items to show when a `Show more` button is pressed.");
+            UiBox *info_button = ui_button_info_popup(str("info_button"), false, info, false);
+            info_button->next_style.size.width.strictness = 1;
+
+            I64 val = ui->config->show_more_inc;
+            UiBox *picker = ui_int_picker(str("picker"), &val, 0, INT64_MAX, 4);
+            picker->next_style.size.width.strictness = 1;
+            ui->config->show_more_inc = val;
+        }
+
+        ui_box(0, "card_width") {
+            ui_tag("row");
+            ui_label(0, "title", str("Card width"));
+            ui_hspacer();
+
+            String info = str("The width of various ui elements like todo cards, flash cards, etc...");
+            UiBox *info_button = ui_button_info_popup(str("info_button"), false, info, false);
+            info_button->next_style.size.width.strictness = 1;
+
+            I64 val = ui->config->card_width;
+            UiBox *picker = ui_int_picker(str("picker"), &val, 0, INT64_MAX, 4);
+            picker->next_style.size.width.strictness = 1;
+            ui->config->card_width = val;
+        }
+
         ui_box(0, "animation_time") {
             ui_tag("row");
             ui_label(0, "title", str("Animation duration"));

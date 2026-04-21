@@ -101,17 +101,17 @@ istruct (ButtonInfoPopup) {
     Buf *buf;
 };
 
-UiBox *ui_button_info_popup (String id, Bool sideways, String markup_filepath) {
+UiBox *ui_button_info_popup (String id, Bool sideways, String markup_filepath, Bool is_filepath) {
     UiBox *button = ui_button(id) {
         ButtonInfoPopup *info = ui_get_box_data(button, sizeof(ButtonInfoPopup), 1*KB);
-        if (! info->buf) info->buf = buf_new_from_file(info->header.mem, markup_filepath);
+        if (! info->buf) info->buf = is_filepath ? buf_new_from_file(info->header.mem, markup_filepath) : buf_new(info->header.mem, markup_filepath);
 
         ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_QUESTION);
 
         Bool opened = button->scratch;
         if (opened || button->signals.clicked) {
             ui_tag_box(button, "press");
-            ui_popup(str("popup"), &opened, true, button) ui_markup_view_buf(str("info"), info->buf, false, 0);
+            ui_popup(str("popup"), &opened, sideways, button) ui_markup_view_buf(str("info"), info->buf, false, 0);
         }
         button->scratch = opened;
     }
