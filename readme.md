@@ -2,7 +2,8 @@
 
 **All-in-one timer, stopwatch, pomodoro, alarm, todo, and flashcards linux app.**
 
-![preview](./data/screenshots/screenshot.png)
+![preview](./data/screenshots/settings_and_help.png)
+[More screenshots](./data/screenshots)
 
 ## Download
 

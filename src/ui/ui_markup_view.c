@@ -360,6 +360,8 @@ static Void build_block (MarkupView *info, MarkupAst *node) {
                         if (cell_idx == col_count) break; // Ignore excess cells.
 
                         UiBox *cell_box = ui_box_fmt(0, "cell%lu", ARRAY_IDX) {
+                            ui_tag("cell");
+
                             ui_style_size(UI_HEIGHT, (UiSize){UI_SIZE_CUSTOM, 1, 1});
                             ui_style_u32(UI_AXIS, UI_AXIS_VERTICAL);
                             ui_style_vec2(UI_PADDING, ui->theme->padding);
