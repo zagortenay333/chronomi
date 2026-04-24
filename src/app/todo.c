@@ -698,7 +698,10 @@ static Void build_task (U64 idx, Bool *out_deleted) {
                     UiBox *delete_button = ui_box(UI_BOX_CAN_FOCUS|UI_BOX_REACTIVE, "delete") {
                         ui_tag("button");
                         ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_TRASH);
-                        if (delete_button->signals.clicked) push_command(.tag=CMD_DEL_TASK, .idx=idx);
+                        if (delete_button->signals.clicked) {
+                            if (out_deleted) *out_deleted = true;
+                            push_command(.tag=CMD_DEL_TASK, .idx=idx);
+                        }
                     }
 
                     UiBox *tracker_button = ui_box(UI_BOX_CAN_FOCUS|UI_BOX_REACTIVE, "tracker") {
@@ -1622,7 +1625,9 @@ static Void build_view_kanban () {
 
                     array_iter (task, &column->tasks) {
                         if (ARRAY_IDX == column->show_more_idx) break;
-                        build_task(task, 0);
+                        Bool deleted = false;
+                        build_task(task, &deleted);
+                        if (deleted) push_command(.tag=CMD_VIEW_KANBAN); // To recompute the cached columns.
                     }
 
                     app_show_more_button(str("show_more"), &column->show_more_idx, column->tasks.count);

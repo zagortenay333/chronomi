@@ -1,3 +1,10 @@
+// solarized dark
+// solarized light
+// dracula
+// nord
+// catpuccin
+// deleting tasks is broken
+
 #include "app/settings.h"
 #include "ui/ui_widgets.h"
 #include "config/config.h"
