@@ -1,5 +1,6 @@
 #include "app/settings.h"
 #include "ui/ui_widgets.h"
+#include "config/config.h"
 #include "app/app.h"
 
 Void settings_view_init (UiViewInstance *view) {
@@ -265,7 +266,25 @@ static UiBox *build_theme_presets_picker (String id) {
                         ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PIXELS, 200, 1});
                         if (button->signals.hovered) ui_style_vec4(UI_BG_COLOR, ui->theme->bg_color_z3);
 
-                        ui_label(UI_BOX_CLICK_THROUGH, "label", it->current_file_name);
+                        ui_label(UI_BOX_CLICK_THROUGH, "label", str_cut_suffix(it->current_file_name, str(".txt")));
+
+                        ui_hspacer();
+
+                        UiBox *preview = ui_box(0, "preview") {
+                            Config *cfg = config_parse(tm, it->current_full_path.as_slice);
+                            Vec4 bg_color = config_get_vec4(cfg, cfg->root, "bg_color_z2");
+                            Vec4 fg_color = config_get_vec4(cfg, cfg->root, "text_color_normal");
+
+                            ui_style_vec4(UI_BG_COLOR, bg_color);
+                            ui_style_vec2(UI_PADDING, ui->theme->padding);
+                            ui_style_vec4(UI_RADIUS, ui->theme->radius);
+                            ui_style_vec4(UI_BORDER_WIDTHS, ui->theme->border_width);
+                            ui_style_vec4(UI_BORDER_COLOR, ui->theme->border_color);
+                            preview->next_style.size.width.strictness = 1;
+
+                            UiBox *label = ui_label(0, "text", str("Lorem ipsum."));
+                            ui_style_box_vec4(label, UI_TEXT_COLOR, fg_color);
+                        }
 
                         if (button->signals.clicked) {
                             fs_delete_file(app->theme_file_path);
