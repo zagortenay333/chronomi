@@ -1,6 +1,12 @@
+// @todo
+// - see whether we can use text_view in tag buttons to avoid text cuttof
+// - make the created/completed/due date buttons do something
+// - don't include screenshots in the appimage
+
 #include "app/app.h"
 #include "ui/ui_widgets.h"
 #include "ui/ui_markup_view.h"
+#include "ui/ui_text_view.h"
 #include "ui/ui_text_editor.h"
 #include "config/config.h"
 #include "buffer/buffer.h"
@@ -50,12 +56,24 @@ istruct (SearchResult) {
     U64 idx;
 };
 
+istruct (FilteredTrackerSlot) {
+    U64 idx;
+    Seconds total;
+};
+
+istruct (TimeTrackerSlot) {
+    String task_str;
+    MarkupAst *task_ast;
+    Array(struct { Date date; Seconds seconds; }) time;
+};
+
 ienum (ViewTag, U8) {
     VIEW_KANBAN,
     VIEW_SEARCH,
     VIEW_EDITOR,
     VIEW_SORT,
     VIEW_DECK_BROWSER,
+    VIEW_TIME_TRACKER,
 };
 
 istruct (View) {
@@ -94,6 +112,20 @@ istruct (View) {
             Bool delete_searched;
             Array(SearchResult) searched;
         } deck_browser;
+
+        struct {
+            U64 show_more_idx;
+            Buf *filter_buf;
+            Date since;
+            Date until;
+            Bool descending;
+            Seconds today;
+            Seconds month;
+            Seconds year;
+            Seconds all_time;
+            Seconds custom;
+            Array(FilteredTrackerSlot) filtered_slots;
+        } time_tracker;
     };
 };
 
@@ -105,12 +137,17 @@ ienum (CommandTag, U8) {
     CMD_NEW_DECK,
     CMD_DEL_DECK,
     CMD_ACTIVATE_DECK,
+    CMD_START_TRACKING,
+    CMD_STOP_TRACKING,
+    CMD_NEW_TRACKER_SLOT,
+    CMD_UPDATE_TRACKER_SLOT,
     CMD_CHANGE_SORT,
     CMD_VIEW_KANBAN,
     CMD_VIEW_EDITOR,
     CMD_VIEW_SORT,
     CMD_VIEW_SEARCH,
     CMD_VIEW_DECK_BROWSER,
+    CMD_VIEW_TIME_TRACKER,
 };
 
 istruct (Command) {
@@ -135,6 +172,13 @@ istruct (Context) {
     ArrayDeck decks;
     ArrayTask tasks;
     ArrayString non_tasks;
+    Array(TimeTrackerSlot) tracker_slots;
+    Buf *time_tracker_file;
+    U64 tracked_task_idx; // Is ARRAY_NIL_IDX when not tracking.
+    Millisec active_track_total; // Total for today.
+    Millisec tic_checkpoint;
+    Millisec tic_save_prev;
+    TickId tick_id;
     F32 editor_width;
     F32 editor_height;
 };
@@ -142,6 +186,9 @@ istruct (Context) {
 static Context *context;
 
 #define push_command(...) array_push_lit(&context->commands, __VA_ARGS__)
+
+static Void save_active_deck ();
+static Void save_time_tracker_data ();
 
 String sort_to_string (SortBy sort) {
     switch (sort) {
@@ -306,6 +353,66 @@ static Void add_tasks (String text, Bool copy_text) {
     }
 }
 
+static String time_to_str (Mem *mem, Millisec ms) {
+    U64 seconds = (ms / 1000) % 60;
+    U64 minutes = (ms / 60000) % 60;
+    U64 hours   = ms / 3600000;
+    return astr_fmt(mem, "%02lu:%02lu:%02lu", hours, minutes, seconds);
+}
+
+static TimeTrackerSlot *get_tracker_slot_for_task (U64 task_idx) {
+    Task *task = array_ref(&context->tasks, task_idx);
+    U64 slot_idx = (task->config->flags & MARKUP_AST_META_CONFIG_HAS_TRACK) ? task->config->track : ARRAY_NIL_IDX;
+    return array_try_ref(&context->tracker_slots, slot_idx);
+}
+
+static Void assign_new_tracker_slot (U64 idx) {
+    Task *task = array_ref(&context->tasks, idx);
+    task->config->flags |= MARKUP_AST_META_CONFIG_HAS_TRACK;
+    task->config->track = context->tracker_slots.count;
+    task_serialize(idx);
+    TimeTrackerSlot *slot = array_push_slot(&context->tracker_slots);
+    slot->task_str = markup_ast_get_text(task->ast, task->text);
+    slot->task_ast = task->ast;
+    array_init(&slot->time, context->config_mem);
+    array_push_lit(&slot->time, .date=os_get_date());
+    save_time_tracker_data();
+    save_active_deck();
+}
+
+static Seconds get_time_tracked_today (U64 idx) {
+    TimeTrackerSlot *slot = get_tracker_slot_for_task(idx);
+    if (! slot) return 0;
+    Date date = os_get_date();
+    array_iter_back (it, &slot->time, *) {
+        if (! os_date_cmp(date, it->date)) {
+            return it->seconds;
+        }
+    }
+    return 0;
+}
+
+static Bool is_task_tracked (U64 idx) {
+    return context->tracked_task_idx == idx;
+}
+
+static Void stop_tracking () {
+    context->tracked_task_idx = ARRAY_NIL_IDX;
+    if (context->tick_id) {
+        win_tick_end(context->tick_id);
+        context->tick_id = 0;
+    }
+}
+
+static Void start_tracking (U64 idx) {
+    context->tracked_task_idx = idx;
+    if (context->tick_id == 0) context->tick_id = win_tick_start(1000);
+    context->tic_checkpoint = os_get_time_ms();
+    TimeTrackerSlot *slot = get_tracker_slot_for_task(idx);
+    if (! slot) assign_new_tracker_slot(idx);
+    context->active_track_total = get_time_tracked_today(idx) * 1000;
+}
+
 static Deck *get_active_deck () {
     array_iter (deck, &context->decks, *) if (deck->active) return deck;
     return array_try_ref(&context->decks, 0);
@@ -330,6 +437,8 @@ static Void save_active_deck () {
 }
 
 static Void load_active_deck () {
+    stop_tracking();
+
     Deck *deck = get_active_deck();
     if (! deck) return;
 
@@ -341,15 +450,75 @@ static Void load_active_deck () {
     add_tasks(file, false);
 }
 
+static Void save_time_tracker_data () {
+    tmem_new(tm);
+
+    String filepath = buf_get_str(context->time_tracker_file, tm);
+    AString astr = astr_new(tm);
+
+    astr_push_cstr(&astr, "slots = [\n");
+    array_iter (slot, &context->tracker_slots, *) {
+        String task_str = str_escape(tm, slot->task_str);
+        astr_push_cstr(&astr, "    {\n");
+        astr_push_fmt(&astr,  "        task = %.*s\n", STR(task_str));
+        astr_push_cstr(&astr, "        time = [\n");
+        array_iter (it, &slot->time, *) {
+            String date = os_date_to_str(tm, it->date);
+            astr_push_fmt(&astr, "            { date=\"%.*s\" seconds=%lu }\n", STR(date), it->seconds);
+        }
+        astr_push_cstr(&astr, "        ]\n");
+        astr_push_cstr(&astr, "    }\n");
+    }
+    astr_push_cstr(&astr, "]\n");
+
+    fs_ensure_file(filepath, (String){});
+    fs_write_entire_file(filepath, astr_to_str(&astr));
+}
+
+static Void load_time_tracker_data () {
+    tmem_new(tm);
+
+    String filepath = buf_get_str(context->time_tracker_file, tm);
+    if (! fs_is_file(filepath)) return;
+
+    context->config_mem_fragmentation += context->tracker_slots.count;
+    context->tracker_slots.count = 0;
+
+    Config *cfg = config_parse(tm, filepath);
+
+    ConfigAst *slots = config_get_array(cfg, cfg->root, "slots");
+    array_iter (slot_ast, &slots->children) {
+        TimeTrackerSlot *slot = array_push_slot(&context->tracker_slots);
+        slot->task_str = str_unescape(context->config_mem, config_get_string(cfg, slot_ast, "task", tm));
+
+        MarkupAst *root = markup_parse(context->config_mem, slot->task_str);
+        slot->task_ast = array_try_get(&root->children, 0);
+
+        array_init(&slot->time, context->config_mem);
+
+        ConfigAst *times = config_get_array(cfg, slot_ast, "time");
+        array_iter (time_ast, &times->children) {
+            String key  = config_get_string(cfg, time_ast, "date", tm);
+            Seconds val = config_get_u64(cfg, time_ast, "seconds");
+            Date date   = os_str_to_date(key);
+            if (date.month != 0) array_push_lit(&slot->time, date, val);
+        }
+    }
+}
+
 static Void save_config (Bool save_deck) {
+    tmem_new(tm);
+
     if (save_deck) save_active_deck();
 
-    tmem_new(tm);
     AString astr = astr_new(tm);
 
     astr_push_fmt(&astr, "version = %lu\n", context->config_version);
     astr_push_fmt(&astr, "editor_width = %f\n", context->editor_width);
     astr_push_fmt(&astr, "editor_height = %f\n", context->editor_height);
+
+    String time_tracker_file = buf_get_str(context->time_tracker_file, tm);
+    astr_push_fmt(&astr, "time_tracker_file = \"%.*s\"\n", STR(time_tracker_file));
 
     astr_push_cstr(&astr, "sort = [\n");
     array_iter (sort, &context->sorts) {
@@ -385,6 +554,7 @@ static Void load_config () {
     array_init(&context->decks, context->config_mem);
     array_init(&context->tasks, context->config_mem);
     array_init(&context->non_tasks, context->config_mem);
+    array_init(&context->tracker_slots, context->config_mem);
 
     fs_ensure_file(context->config_file_path, str("data/settings/todo.txt"));
 
@@ -399,6 +569,7 @@ static Void load_config () {
 
     context->editor_width  = config_get_f64(cfg, cfg->root, "editor_width");
     context->editor_height = config_get_f64(cfg, cfg->root, "editor_height");
+    context->time_tracker_file = buf_new(context->config_mem, config_get_string(cfg, cfg->root, "time_tracker_file", tm));
 
     ConfigAst *sort = config_get_array(cfg, cfg->root, "sort");
     array_iter (sort, &sort->children) {
@@ -420,6 +591,82 @@ static Void load_config () {
     }
 
     load_active_deck();
+    load_time_tracker_data();
+}
+
+static void build_tracker_popup (U64 idx) {
+    tmem_new(tm);
+
+    Task *task = array_ref(&context->tasks, idx);
+
+    if (buf_get_count(context->time_tracker_file) == 0) {
+        String text = str("[note] To track time you must select a backing text file in the time tracker ui.");
+        ui_markup_view(str("markup"), text, 0);
+        return;
+    }
+
+    U64 track_idx = (task->config->flags & MARKUP_AST_META_CONFIG_HAS_TRACK) ? task->config->track : ARRAY_NIL_IDX;
+    TimeTrackerSlot *slot = array_try_ref(&context->tracker_slots, track_idx);
+    String task_str = markup_ast_get_text(task->ast, task->text);
+
+    if (slot && !str_match(task_str, slot->task_str)) {
+        ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PIXELS, ui->config->card_width, 0});
+        String mod = str_replace_all(tm, slot->task_str, str("\n"), str("\n  "));
+        String info = astr_fmt(tm,
+            "The text of the corresponding tracker slot does not match this task.\n"
+            "Here is what the text in the slot currently looks like:\n"
+            "> %.*s\n"
+            "You can do one of the following:\n"
+            "- Create a new slot leaving the old one in the tracker.\n"
+            "- Update the current slot to match with this task.\n", STR(mod));
+        ui_markup_view(str("markup"), info, 0);
+        ui_button_group(str("linked")) {
+            UiBox *new_button = ui_button(str("new")) {
+                ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PCT_PARENT, 1, 0});
+                ui_label(UI_BOX_CLICK_THROUGH, "label", str("New slot"));
+                if (new_button->signals.clicked) push_command(.tag=CMD_NEW_TRACKER_SLOT, .idx=idx);
+            }
+
+            UiBox *update_button = ui_button(str("update")) {
+                ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PCT_PARENT, 1, 0});
+                ui_label(UI_BOX_CLICK_THROUGH, "label", str("Update"));
+                if (update_button->signals.clicked) push_command(.tag=CMD_UPDATE_TRACKER_SLOT, .idx=idx);
+            }
+        }
+    } else {
+        ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PIXELS, ui->config->card_width/2, 0});
+        if (is_task_tracked(idx)) {
+            ui_box(0, "clock") {
+                ui_label(0, "title", str("Time tracked today:"));
+                ui_hspacer();
+                String label = time_to_str(tm, context->active_track_total);
+                UiBox *clock = ui_label_extra(0, "clock", label, ui->config->font_path_bold, ui->config->font_size, 0);
+                ui_style_box_vec4(clock, UI_TEXT_COLOR, ui->theme->text_color_red);
+            }
+        }
+
+        ui_button_group(str("linked")) {
+            if (is_task_tracked(idx)) {
+                UiBox *stop_button = ui_button(str("stop")) {
+                    ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PCT_PARENT, 1, 0});
+                    ui_label(UI_BOX_CLICK_THROUGH, "label", str("Stop"));
+                    if (stop_button->signals.clicked) push_command(.tag=CMD_STOP_TRACKING);
+                }
+            } else {
+                UiBox *start_button = ui_button(str("start")) {
+                    ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PCT_PARENT, 1, 0});
+                    ui_label(UI_BOX_CLICK_THROUGH, "label", str("Start"));
+                    if (start_button->signals.clicked) push_command(.tag=CMD_START_TRACKING, .idx=idx);
+                }
+            }
+
+            UiBox *stats_button = ui_button(str("stats")) {
+                ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PCT_PARENT, 1, 0});
+                ui_label(UI_BOX_CLICK_THROUGH, "label", str("Stats"));
+                if (stats_button->signals.clicked) push_command(.tag=CMD_VIEW_TIME_TRACKER, .idx=idx);
+            }
+        }
+    }
 }
 
 static Void build_task (U64 idx, Bool *out_deleted) {
@@ -429,8 +676,13 @@ static Void build_task (U64 idx, Bool *out_deleted) {
 
     UiBox *box = ui_box_fmt(UI_BOX_CAN_FOCUS, "card%lu", idx) {
         ui_tag("card");
+        ui_style_vec2(UI_PADDING, vec2(ui->theme->border_width.x, ui->theme->border_width.x));
 
         ui_box(0, "header") {
+            if (is_task_tracked(idx)) {
+                ui_style_vec4(UI_BG_COLOR, ui->theme->color_red);
+            }
+
             Bool checked = task->config->flags & MARKUP_AST_META_CONFIG_HAS_DONE;
             UiBox *checkbox = ui_checkbox("checkbox", &checked);
             if (checkbox->signals.clicked) {
@@ -454,6 +706,26 @@ static Void build_task (U64 idx, Bool *out_deleted) {
                         if (delete_button->signals.clicked) push_command(.tag=CMD_DEL_TASK, .idx=idx);
                     }
 
+                    UiBox *tracker_button = ui_box(UI_BOX_CAN_FOCUS|UI_BOX_REACTIVE, "tracker") {
+                        ui_tag("button");
+                        ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_TIME_TRACKER);
+                        Bool opened = tracker_button->scratch;
+
+                        if (opened || tracker_button->signals.clicked) {
+                            ui_tag("press");
+                            ui_grab_focus(box);
+                            ui_popup(str("popup"), &opened, false, tracker_button) {
+                                ui_box(0, "popup") {
+                                    ui_style_f32(UI_SPACING, ui->theme->spacing);
+                                    ui_style_u32(UI_AXIS, UI_AXIS_VERTICAL);
+                                    build_tracker_popup(idx);
+                                }
+                            }
+                        }
+
+                        tracker_button->scratch = opened;
+                    }
+
                     if (! (task->config->flags & MARKUP_AST_META_CONFIG_HAS_PIN)) {
                         UiBox *pin_button = ui_box(UI_BOX_CAN_FOCUS|UI_BOX_REACTIVE, "pin") {
                             ui_tag("button");
@@ -469,10 +741,14 @@ static Void build_task (U64 idx, Bool *out_deleted) {
 
             if (task->config->flags & MARKUP_AST_META_CONFIG_HAS_PIN) {
                 UiBox *pin_button = ui_box(UI_BOX_CAN_FOCUS|UI_BOX_REACTIVE, "pin") {
+                    ui_tag("button");
                     ui_style_rule(".button *") { ui_style_vec4(UI_TEXT_COLOR, ui->theme->text_color_green); }
                     ui_style_rule(".button.hover *") { ui_style_vec4(UI_TEXT_COLOR, ui->theme->text_color_blue); }
+                    ui_style_rule(".button.focus") {
+                        ui_style_vec4(UI_BORDER_COLOR, ui->theme->border_color_focus);
+                        ui_style_vec4(UI_BORDER_WIDTHS, ui->theme->border_width_focus);
+                    }
 
-                    ui_tag("button");
                     ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_PIN);
                     pin_button->next_style.size.width.strictness = 1;
                     if (pin_button->signals.clicked) {
@@ -775,7 +1051,7 @@ static Void build_view_sort () {
                 ui_style_vec4(UI_RADIUS, vec4(0, 0, 0, 0));
                 ui_style_vec2(UI_PADDING, ui->theme->padding);
                 ui_style_f32(UI_SPACING, ui->theme->spacing);
-                ui_style_vec4(UI_BG_COLOR, ui->theme->bg_color_z3);
+                ui_style_vec4(UI_BG_COLOR, ui->theme->bg_color_z2);
                 ui_style_vec4(UI_BORDER_WIDTHS, vec4(b, b, b, 0));
                 ui_style_vec4(UI_BORDER_COLOR, ui->theme->border_color);
             }
@@ -984,6 +1260,303 @@ static Void build_view_deck_browser () {
     }
 }
 
+static Int cmp_filtered_slots_ascending (Void *a_, Void *b_) {
+    FilteredTrackerSlot *a = a_;
+    FilteredTrackerSlot *b = b_;
+    return (a->total < b->total) ? -1 : (a->total > b->total) ? 1 : 0;
+}
+
+static Int cmp_filtered_slots_descending (Void *a_, Void *b_) {
+    FilteredTrackerSlot *a = a_;
+    FilteredTrackerSlot *b = b_;
+    return (a->total < b->total) ? 1 : (a->total > b->total) ? -1 : 0;
+}
+
+static Void compute_time_tracker_stats () {
+    tmem_new(tm);
+
+    assert_dbg(context->view.tag == VIEW_TIME_TRACKER);
+    Auto view = &context->view.time_tracker;
+
+    String filter = buf_get_str(view->filter_buf, tm);
+    MarkupAst *filter_node = markup_filter_parse(tm, filter);
+
+    // Filter slots:
+    view->filtered_slots.count = 0;
+    array_iter (slot, &context->tracker_slots, *) {
+        MarkupAstMetaConfig config = {};
+        if (slot->task_ast->tag == MARKUP_AST_META) config = *cast(MarkupAstMeta*, slot->task_ast)->config;
+        Task dummy = { .text=slot->task_str, .ast=slot->task_ast, .config=&config };
+        if (task_passes_filter(&dummy, filter_node)) {
+            Seconds total = 0;
+            array_iter (t, &slot->time, *) total = sat_add64(total, t->seconds);
+            array_push_lit(&view->filtered_slots, .idx=ARRAY_IDX, .total=total);
+        }
+    }
+
+    // Sort slots:
+    if (view->descending) {
+        array_sort_cmp(&view->filtered_slots, cmp_filtered_slots_descending);
+    } else {
+        array_sort_cmp(&view->filtered_slots, cmp_filtered_slots_ascending);
+    }
+
+    { // Compute stats:
+        view->today    = 0;
+        view->month    = 0;
+        view->year     = 0;
+        view->all_time = 0;
+        view->custom   = 0;
+
+        Date today = os_get_date();
+        Date start_of_month = { today.year, today.month, 1, 0 };
+        Date start_of_year = { today.year, 1, 1, 0 };
+
+        Date since = view->since;
+        Date until = view->until;
+
+        if (! os_is_date_ymd_valid(since)) since = (Date){};
+        if (! os_is_date_ymd_valid(until)) until = (Date){9999, 99, 99, 0};
+        if (os_date_cmp(since, until) == 1) swap(since, until);
+
+        array_iter (it, &view->filtered_slots, *) {
+            TimeTrackerSlot *slot = array_ref(&context->tracker_slots, it->idx);
+
+            array_iter (t, &slot->time, *) {
+                view->all_time = sat_add64(view->all_time, t->seconds);
+                I32 tcmp = os_date_cmp(t->date, today);
+                if (tcmp == 0) view->today = sat_add64(view->today, t->seconds);
+                if (os_date_cmp(t->date, start_of_month) != -1 && tcmp != 1) view->month = sat_add64(view->month, t->seconds);
+                if (os_date_cmp(t->date, start_of_year) != -1 && tcmp != 1) view->year = sat_add64(view->year, t->seconds);
+                if (os_date_cmp(t->date, since) != -1 && os_date_cmp(t->date, until) != 1) view->custom = sat_add64(view->custom, t->seconds);
+            }
+        }
+    }
+}
+
+static Void build_view_time_tracker () {
+    tmem_new(tm);
+
+    Auto view = &context->view.time_tracker;
+
+    ui_scroll_box(str("left_box"), true) {
+        ui_tag("sidebar");
+        ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PCT_PARENT, .35, 1});
+
+        ui_box(UI_BOX_INVISIBLE_BG, "row_group1") {
+            ui_box(0, "row1") {
+                ui_tag("row");
+                EventTag tag = ui->event->tag;
+
+                ui_file_picker_entry(str("tracker_file"), context->time_tracker_file, str("Time tracker file..."), -1, false, false, (String){});
+
+                UiBox *info_button = ui_button_info_popup(str("info_button"), true, str("data/docs/tracker.txt"), true);
+                info_button->next_style.size.width.strictness = 1;
+
+                String filepath = buf_get_str(context->time_tracker_file, tm);
+                Bool is_file = fs_is_file(filepath);
+
+                if (! is_file) {
+                    ui_style_rule("#entry #text_box") ui_style_vec4(UI_TEXT_COLOR, ui->theme->text_color_red);
+                } else if (ui->event->tag != tag) {
+                    stop_tracking();
+                    load_time_tracker_data();
+                    save_config(false);
+                }
+            }
+        }
+
+        ui_box(UI_BOX_INVISIBLE_BG, "row_group2") {
+            ui_style_u32(UI_AXIS, UI_AXIS_VERTICAL);
+
+            EventTag etag = ui->event->tag;
+
+            ui_box(0, "filter_expression") {
+                ui_tag("row");
+                ui_entry(str("entry"), view->filter_buf, -1, str("Filter expression..."));
+                UiBox *info_button = ui_button_info_popup(str("info_button"), true, str("data/docs/filters.txt"), true);
+                info_button->next_style.size.width.strictness = 1;
+            }
+
+            ui_box(0, "since_date") {
+                ui_tag("row");
+                ui_label(0, "label", str("Since"));
+                ui_hspacer();
+                UiBox *entry = ui_date_picker_entry(str("date_picker"), &view->since, (String){}, 25);
+                entry->next_style.size.width.strictness = 1;
+            }
+
+            ui_box(0, "until_date") {
+                ui_tag("row");
+                ui_label(0, "label", str("Until"));
+                ui_hspacer();
+                UiBox *entry = ui_date_picker_entry(str("date_picker"), &view->until, (String){}, 25);
+                entry->next_style.size.width.strictness = 1;
+            }
+
+            UiBox *b = ui_box(0, "descending") {
+                ui_tag("row");
+                ui_label(0, "label", str("Descending"));
+                ui_hspacer();
+                ui_toggle("toggle", &view->descending);
+            }
+
+            Bool tracking = context->tracked_task_idx != ARRAY_NIL_IDX;
+            Seconds dt = (os_get_time_ms() - context->tic_save_prev) / 1000;
+            if ((b->start_frame == ui->frame) || (ui->event->tag != etag) || (tracking && dt >= 1)) compute_time_tracker_stats();
+        }
+
+        if (context->tracked_task_idx != ARRAY_NIL_IDX) {
+            ui_box(UI_BOX_INVISIBLE_BG, "row_group3") {
+                ui_style_u32(UI_AXIS, UI_AXIS_VERTICAL);
+
+                ui_box(0, "row1") {
+                    ui_tag("row");
+                    String time = time_to_str(tm, context->active_track_total);
+                    UiBox *clock = ui_label_extra(0, "clock", time, ui->config->font_path_bold, ui->config->font_size, 0);
+                    ui_style_box_vec4(clock, UI_TEXT_COLOR, ui->theme->text_color_red);
+                    ui_hspacer();
+                    UiBox *preview_button = ui_button(str("preview")) {
+                        ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_EYE);
+                        preview_button->next_style.size.width.strictness = 1;
+                        Bool opened = preview_button->scratch;
+                        if (opened || preview_button->signals.clicked) {
+                            ui_tag("press");
+                            ui_popup(str("popup"), &opened, false, preview_button) {
+                                Task *task = array_ref(&context->tasks, context->tracked_task_idx);
+                                String text = markup_ast_get_text(task->ast, task->text);
+                                ui_text_view(0, str("text"), text, ui->config->font_size, (SliceUiMarkupRange){});
+                            }
+                        }
+                        preview_button->scratch = opened;
+                    }
+                }
+
+                ui_box(0, "row2") {
+                    ui_tag("row");
+                    UiBox *stop_button = ui_button(str("stop")) {
+                        ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PCT_PARENT, 1, 0});
+                        ui_label(UI_BOX_CLICK_THROUGH, "label", str("Stop"));
+                        if (stop_button->signals.clicked) push_command(.tag=CMD_STOP_TRACKING);
+                    }
+                }
+            }
+        }
+
+        ui_button_group(str("linked")) {
+            UiBox *close_button = ui_button(str("close")) {
+                ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PCT_PARENT, 1, 0});
+                ui_label(UI_BOX_CLICK_THROUGH, "label", str("Close"));
+                if (close_button->signals.clicked) push_command(.tag=CMD_VIEW_KANBAN);
+            }
+
+            UiBox *copy_button = ui_button(str("copy")) {
+                ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PCT_PARENT, 1, 0});
+                ui_label(UI_BOX_CLICK_THROUGH, "label", str("Copy"));
+
+                if (copy_button->signals.clicked) {
+                    AString astr = astr_new(tm);
+                    astr_push_cstr(&astr, "{\n");
+                    astr_push_fmt(&astr, "    \"today\": %lu,\n", view->today);
+                    astr_push_fmt(&astr, "    \"month\": %lu,\n", view->month);
+                    astr_push_fmt(&astr, "    \"year\": %lu,\n", view->year);
+                    astr_push_fmt(&astr, "    \"all_time\": %lu,\n", view->all_time);
+                    astr_push_cstr(&astr, "    \"custom\": {\n");
+                    astr_push_fmt(&astr, "        \"since\": \"%.*s\",\n", STR(os_date_to_str(tm, view->since)));
+                    astr_push_fmt(&astr, "        \"until\": \"%.*s\",\n", STR(os_date_to_str(tm, view->until)));
+                    astr_push_fmt(&astr, "        \"total\": %lu,\n", view->custom);
+                    astr_push_cstr(&astr, "        \"slots\": [\n");
+                    array_iter (it, &view->filtered_slots, *) {
+                        TimeTrackerSlot *slot = array_ref(&context->tracker_slots, it->idx);
+                        String text = str_escape(tm, slot->task_str);
+                        astr_push_fmt(&astr, "            { \"total\": %lu, \"str\": %.*s  },\n",  it->total, STR(text));
+                        if (ARRAY_ITER_DONE) {
+                            astr.count -= 2; // Get rid of last comma.
+                            astr_push_byte(&astr, '\n');
+                        }
+                    }
+                    astr_push_cstr(&astr, "        ]\n");
+                    astr_push_cstr(&astr, "    }\n");
+                    astr_push_cstr(&astr, "}\n");
+                    win_set_clipboard_text(astr_to_str(&astr));
+                }
+
+                Bool opened = copy_button->scratch;
+
+                if (opened || copy_button->signals.clicked) {
+                    ui_tag("press");
+                    ui_popup(str("popup"), &opened, false, copy_button) {
+                        String info = str("Search results copied to clipboard!\n"
+                                          "[note]\n"
+                                          "  - The time unit used is `seconds`.\n"
+                                          "  - Double quotes inside the task text are escaped with a `\\` char.\n"
+                                          "  - Newlines inside the task text appear as `\\n`.");
+                        ui_markup_view(str("info"), info, 0);
+                    }
+                }
+
+                copy_button->scratch = opened;
+            }
+        }
+    }
+
+    ui_scroll_box(str("right_box"), true) {
+        ui_style_u32(UI_AXIS, UI_AXIS_VERTICAL);
+        ui_style_u32(UI_ALIGN_X, UI_ALIGN_MIDDLE);
+        ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PCT_PARENT, 1, 0});
+        ui_style_size(UI_HEIGHT, (UiSize){UI_SIZE_PCT_PARENT, 1, 0});
+        ui_style_f32(UI_SPACING, ui->theme->spacing);
+        ui_style_vec2(UI_PADDING, ui->theme->padding);
+
+        ui_box(0, "content") {
+            ui_style_u32(UI_AXIS, UI_AXIS_VERTICAL);
+            ui_style_f32(UI_SPACING, ui->theme->spacing);
+            ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PIXELS, ui->config->card_width, 0});
+
+            { // Build totals table:
+                String ftoday  = time_to_str(tm, view->today*1000);
+                String fmonth  = time_to_str(tm, view->month*1000);
+                String fyear   = time_to_str(tm, view->year*1000);
+                String fall    = time_to_str(tm, view->all_time*1000);
+                String fcustom = time_to_str(tm, view->custom*1000);
+
+                AString markup = astr_new(tm);
+                astr_push_fmt(&markup, "|Today\n|%.*s\n|-\n", STR(ftoday));
+                astr_push_fmt(&markup, "|This month\n|%.*s\n|-\n", STR(fmonth));
+                astr_push_fmt(&markup, "|This year\n|%.*s\n|-\n", STR(fyear));
+                astr_push_fmt(&markup, "|All time\n|%.*s\n|-\n", STR(fall));
+                astr_push_fmt(&markup, "|Custom range\n|%.*s\n|-\n", STR(fcustom));
+                ui_markup_view(str("totals"), astr_to_str(&markup), 0);
+            }
+
+            // Build per slot infos:
+            array_iter (it, &view->filtered_slots, *) {
+                if (ARRAY_IDX == view->show_more_idx) break;
+                TimeTrackerSlot *slot = array_ref(&context->tracker_slots, it->idx);
+
+                ui_box_fmt(0, "slot%lu", ARRAY_IDX) {
+                    ui_tag("card");
+                    ui_style_vec2(UI_PADDING, vec2(ui->theme->border_width.x, ui->theme->border_width.x));
+
+                    ui_box(0, "header") {
+                        String time = time_to_str(tm, it->total*1000);
+                        String label = astr_fmt(tm, "All time: %.*s", STR(time));
+                        ui_label(0, "title", label);
+                        ui_hspacer();
+                    }
+
+                    ui_box(0, "body") {
+                        ui_style_vec4(UI_BG_COLOR, ui->theme->bg_color_z1);
+                        ui_text_view(0, str("text"), slot->task_str, ui->config->font_size, (SliceUiMarkupRange){});
+                    }
+                }
+            }
+
+            app_show_more_button(str("show_more"), &view->show_more_idx, view->filtered_slots.count);
+        }
+    }
+}
+
 static Void build_view_kanban () {
     Auto view = &context->view.kanban;
 
@@ -1018,6 +1591,13 @@ static Void build_view_kanban () {
             ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_SORT_ASC);
             if (sort_button->signals.clicked) push_command(.tag=CMD_VIEW_SORT);
             if (sort_button->signals.hovered) { ui_tooltip(str("tooltip")) ui_label(0, "tooltip", str("Sort tasks")); }
+        }
+
+        UiBox *tracker_button = ui_button(str("tracker")) {
+            UiBox *icon = ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_TIME_TRACKER);
+            if (context->tracked_task_idx != ARRAY_NIL_IDX) ui_style_box_vec4(icon, UI_TEXT_COLOR, ui->theme->text_color_red);
+            if (tracker_button->signals.clicked) push_command(.tag=CMD_VIEW_TIME_TRACKER, .idx=ARRAY_NIL_IDX);
+            if (tracker_button->signals.hovered) { ui_tooltip(str("tooltip")) ui_label(0, "tooltip", str("Time tracker")); }
         }
     }
 
@@ -1078,6 +1658,7 @@ static Void destroy_current_view () {
     case VIEW_SORT: break;
     case VIEW_SEARCH: break;
     case VIEW_DECK_BROWSER: break;
+    case VIEW_TIME_TRACKER: break;
     }
 
     arena_pop_all(cast(Arena*, context->view_mem));
@@ -1097,6 +1678,7 @@ static Void execute_commands () {
             Task *task = array_ref(&context->tasks, cmd->idx);
             task->config->flags = cmd->flags;
             task_serialize(cmd->idx);
+            if (is_task_tracked(cmd->idx)) stop_tracking();
             sort_tasks();
             if (! cmd->skip_config_save) save_config(true);
         } break;
@@ -1110,6 +1692,7 @@ static Void execute_commands () {
         case CMD_DEL_TASK: {
             array_remove(&context->tasks, cmd->idx);
             context->config_mem_fragmentation++;
+            if (is_task_tracked(cmd->idx)) stop_tracking();
             if (! cmd->skip_config_save) save_config(true);
         } break;
 
@@ -1132,6 +1715,27 @@ static Void execute_commands () {
             array_iter (deck, &context->decks, *) deck->active == (ARRAY_IDX == cmd->idx);
             load_active_deck();
             if (! cmd->skip_config_save) save_config(false);
+        } break;
+
+        case CMD_START_TRACKING: {
+            start_tracking(cmd->idx);
+        } break;
+
+        case CMD_STOP_TRACKING: {
+            stop_tracking();
+        } break;
+
+        case CMD_NEW_TRACKER_SLOT: {
+            assign_new_tracker_slot(cmd->idx);
+        } break;
+
+        case CMD_UPDATE_TRACKER_SLOT: {
+            Task *task = array_ref(&context->tasks, cmd->idx);
+            TimeTrackerSlot *slot = get_tracker_slot_for_task(cmd->idx);
+            slot->task_str = markup_ast_get_text(task->ast, task->text);
+            slot->task_ast = task->ast;
+            context->config_mem_fragmentation++;
+            save_time_tracker_data();
         } break;
 
         case CMD_CHANGE_SORT: {
@@ -1200,6 +1804,23 @@ static Void execute_commands () {
             array_init(&context->view.deck_browser.searched, context->view_mem);
         } break;
 
+        case CMD_VIEW_TIME_TRACKER: {
+            destroy_current_view();
+            context->view.tag = VIEW_TIME_TRACKER;
+            Task *task = (cmd->idx == ARRAY_NIL_IDX) ? 0 : array_ref(&context->tasks, cmd->idx);
+
+            if (task) {
+                TimeTrackerSlot *slot = get_tracker_slot_for_task(cmd->idx);
+                if (! slot) assign_new_tracker_slot(cmd->idx);
+                context->view.time_tracker.filter_buf = buf_new(context->view_mem, astr_fmt(tm, "track %lu", task->config->track));
+            } else {
+                context->view.time_tracker.filter_buf = buf_new(context->view_mem, str("*"));
+            }
+
+            context->view.time_tracker.descending = true;
+            array_init(&context->view.time_tracker.filtered_slots, context->view_mem);
+        } break;
+
         case CMD_VIEW_SEARCH: {
             String needle = cmd->str.data ? str_copy(tm, cmd->str) : str("");
             destroy_current_view();
@@ -1215,6 +1836,7 @@ static Void execute_commands () {
             Task *task = (cmd->idx == ARRAY_NIL_IDX) ? 0 : array_ref(&context->tasks, cmd->idx);
             String init_text;
             if (task) {
+                if (is_task_tracked(cmd->idx)) stop_tracking();
                 init_text = markup_ast_get_text(task->ast, task->text);
             } else {
                 Date d = os_get_date();
@@ -1229,6 +1851,43 @@ static Void execute_commands () {
     context->commands.count = 0;
 }
 
+static Void tic () {
+    Task *task = array_ref(&context->tasks, context->tracked_task_idx);
+    TimeTrackerSlot *slot = array_ref(&context->tracker_slots, task->config->track);
+
+    assert_dbg(task->config->flags & MARKUP_AST_META_CONFIG_HAS_TRACK);
+
+    Date date = os_get_date();
+    Millisec now = os_get_time_ms();
+    Millisec dt = now - context->tic_checkpoint;
+    context->active_track_total = sat_add64(context->active_track_total, dt);
+
+    U64 time_idx = ARRAY_NIL_IDX;
+    { // Find time_idx:
+        array_iter_back (it, &slot->time, *) {
+            if (! os_date_cmp(date, it->date)) {
+                time_idx = ARRAY_IDX;
+                break;
+            }
+        }
+
+        if (time_idx == ARRAY_NIL_IDX) {
+            time_idx = slot->time.count;
+            array_push_lit(&slot->time, .date=date);
+        }
+    }
+
+    Auto time_slot = array_ref(&slot->time, time_idx);
+    time_slot->seconds = context->active_track_total / 1000;
+
+    if ((now - context->tic_save_prev) / 1000 > 1) {
+        context->tic_save_prev = now;
+        save_time_tracker_data();
+    }
+
+    context->tic_checkpoint = now;
+}
+
 Void todo_view_build (UiViewInstance *, Bool visible) {
     if (context->decks.count == 0 && context->view.tag != VIEW_DECK_BROWSER) {
         push_command(.tag=CMD_VIEW_DECK_BROWSER);
@@ -1236,6 +1895,7 @@ Void todo_view_build (UiViewInstance *, Bool visible) {
 
     execute_commands();
     if (context->config_mem_fragmentation > 100) load_config();
+    if (context->tick_id) tic();
 
     switch (context->view.tag) {
     case VIEW_KANBAN: build_view_kanban(); break;
@@ -1243,6 +1903,7 @@ Void todo_view_build (UiViewInstance *, Bool visible) {
     case VIEW_SEARCH: build_view_search(); break;
     case VIEW_SORT: build_view_sort(); break;
     case VIEW_DECK_BROWSER: build_view_deck_browser(); break;
+    case VIEW_TIME_TRACKER: build_view_time_tracker(); break;
     }
 }
 
@@ -1250,7 +1911,8 @@ Void todo_init () {
     if (context) return;
 
     context = mem_new(mem_root, Context);
-    context->config_version = 0;
+    context->config_version = 1;
+    context->tracked_task_idx = ARRAY_NIL_IDX;
     context->view_mem = cast(Mem*, arena_new(mem_root, 1*KB));
     context->config_mem = cast(Mem*, arena_new(mem_root, 1*KB));
     array_init(&context->commands, mem_root);

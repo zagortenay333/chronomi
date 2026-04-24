@@ -119,6 +119,13 @@ Bool fs_make_file_executable (String path) {
     return result == 0;
 }
 
+Bool fs_is_file (String path) {
+    tmem_new(tm);
+    struct stat st;
+    Int r = stat(cstr(tm, path), &st);
+    return (r == 0) ? S_ISREG(st.st_mode) : false;
+}
+
 Bool fs_file_exists (String path) {
     tmem_new(tm);
     Int r = access(cstr(tm, path), F_OK);

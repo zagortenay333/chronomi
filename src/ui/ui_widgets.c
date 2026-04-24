@@ -20,10 +20,15 @@ UiBox *ui_vspacer () {
 UiBox *ui_button_push (String id) {
     UiBox *container = ui_box_push_str(UI_BOX_REACTIVE|UI_BOX_CAN_FOCUS, id);
     ui_tag_box(container, "button");
+
+    Vec4 c1 = ui->theme->bg_color_z3;
+    Vec4 c2 = ui->theme->bg_color_z2;
+    if (rgba_to_hsva(c1).z < rgba_to_hsva(c2).z) swap(c1, c2);
+    ui_style_box_vec4(container, UI_BG_COLOR, c1);
+    ui_style_box_vec4(container, UI_BG_COLOR2, c2);
+
     ui_style_box_u32(container, UI_ALIGN_Y, UI_ALIGN_MIDDLE);
     ui_style_box_u32(container, UI_ALIGN_X, UI_ALIGN_MIDDLE);
-    ui_style_box_vec4(container, UI_BG_COLOR, ui->theme->bg_color_z3);
-    ui_style_box_vec4(container, UI_BG_COLOR2, ui->theme->bg_color_z2);
     ui_style_box_vec4(container, UI_RADIUS, ui->theme->radius);
     ui_style_box_f32(container, UI_OUTSET_SHADOW_WIDTH, ui->theme->out_shadow_width);
     ui_style_box_vec4(container, UI_OUTSET_SHADOW_COLOR, ui->theme->out_shadow_color);
@@ -85,10 +90,27 @@ UiBox *ui_button_label (CString id) {
 UiBox *ui_button_group_push (String id) {
     UiBox *container = ui_box_push_str(UI_BOX_INVISIBLE_BG, id);
     F32 r = ui->theme->radius.x;
-    ui_style_rule(".button") ui_style_vec4(UI_RADIUS, vec4(0, 0, 0, 0));
-    ui_style_rule(".button:first") ui_style_vec4(UI_RADIUS, vec4(0, r, 0, r));
-    ui_style_rule(".button:last") ui_style_vec4(UI_RADIUS, vec4(r, 0, r, 0));
-    ui_style_rule(".button:first:last") ui_style_vec4(UI_RADIUS, vec4(r, r, r, r));
+    F32 b = ui->theme->border_width.x;
+
+    ui_style_rule(".button") {
+        ui_style_vec4(UI_RADIUS, vec4(0, 0, 0, 0));
+        ui_style_vec4(UI_BORDER_WIDTHS, vec4(0, b, b, b));
+    }
+
+    ui_style_rule(".button:first") {
+        ui_style_vec4(UI_RADIUS, vec4(0, r, 0, r));
+    }
+
+    ui_style_rule(".button:last") {
+        ui_style_vec4(UI_RADIUS, vec4(r, 0, r, 0));
+        ui_style_vec4(UI_BORDER_WIDTHS, vec4(b, b, b, b));
+    }
+
+    ui_style_rule(".button:first:last") {
+        ui_style_vec4(UI_RADIUS, vec4(r, r, r, r));
+        ui_style_vec4(UI_BORDER_WIDTHS, vec4(b, b, b, b));
+    }
+
     return container;
 }
 
@@ -602,7 +624,6 @@ Void ui_scroll_box_pop () {
 }
 
 istruct (UiPopup) {
-    Bool *shown;
     Bool sideways;
     UiBox *anchor;
 };
@@ -617,8 +638,10 @@ static Void size_popup (UiBox *popup, U64 axis) {
             size += child->rect.size[axis];
         }
     } else {
+        U64 idx = array_find(&popup->children, IT->style.size.v[axis].tag != UI_SIZE_PCT_PARENT);
+        if (idx == ARRAY_NIL_IDX) cycle = true;
+
         array_iter(child, &popup->children) {
-            if (child->style.size.v[axis].tag == UI_SIZE_PCT_PARENT) cycle = true;
             if (child->rect.size[axis] > size) size = child->rect.size[axis];
         }
     }
@@ -631,7 +654,7 @@ static Void size_popup (UiBox *popup, U64 axis) {
 }
 
 static Void layout_popup (UiBox *popup) {
-    UiPopup *info = cast(UiPopup*, popup->scratch);
+    UiPopup *info = cast(UiPopup*, popup->parent->scratch);
     Rect anchor = info->anchor->rect;
     Rect viewport = ui->root->rect;
     F32 popup_w = popup->rect.w;
@@ -704,13 +727,13 @@ UiBox *ui_popup_push (String id, Bool *shown, Bool sideways, UiBox *anchor) {
     if ((ui->event->tag == EVENT_KEY_PRESS) && (ui->event->key == KEY_ESC)) *shown = false;
     if (overlay->signals.clicked && ui->event->key == KEY_MOUSE_LEFT) *shown = false;
 
-    UiBox *popup = ui_scroll_box_push(str("popup"), true);
-    popup->size_fn = size_popup;
     UiPopup *info = mem_new(ui->frame_mem, UiPopup);
     info->sideways = sideways;
-    info->shown = shown;
     info->anchor = anchor;
-    popup->scratch = cast(U64, info);
+    overlay->scratch = cast(U64, info);
+
+    UiBox *popup = ui_scroll_box_push(str("popup"), true);
+    popup->size_fn = size_popup;
     array_push_lit(&ui->deferred_layout_fns, layout_popup, popup);
     ui_style_box_u32(popup, UI_AXIS, UI_AXIS_VERTICAL);
     ui_style_box_size(popup, UI_WIDTH, (UiSize){UI_SIZE_CUSTOM, 1, 0});
@@ -857,7 +880,7 @@ UiBox *ui_entry (String id, Buf *buf, F32 width_in_chars, String hint) {
             UiBox *label = ui_label_extra(UI_BOX_CLICK_THROUGH, "hint", hint, font_path, font_size, true);
             ui_style_box_f32(label, UI_FLOAT_X, text_box->rect.x - container->rect.x + text_box->style.padding.x);
             ui_style_box_f32(label, UI_FLOAT_Y, text_box->rect.y - container->rect.y + text_box->style.padding.y + 1);
-            ui_style_box_vec4(label, UI_TEXT_COLOR, ui->theme->text_color_inactive);
+            ui_style_box_vec4(label, UI_TEXT_COLOR, ui->theme->text_color_faint);
         }
     }
 
@@ -1641,7 +1664,7 @@ UiBox *ui_date_picker (String id, Date *date) {
 
                             Bool selected = (d.month == date->month && d.day == date->day);
 
-                            UiBox *label = ui_label(0, "label", astr_fmt(tm, "%02u", d.day));
+                            UiBox *label = ui_label(UI_BOX_CLICK_THROUGH, "label", astr_fmt(tm, "%02u", d.day));
 
                             if (dim) {
                                 ui_style_box_vec4(label, UI_TEXT_COLOR, ui->theme->text_color_inactive);
@@ -1652,11 +1675,65 @@ UiBox *ui_date_picker (String id, Date *date) {
                                 ui_style_box_vec4(cell, UI_BG_COLOR, ui->theme->bg_color_selection);
                             }
 
-                            if (cell->signals.clicked) *date = d;
+                            if (cell->signals.clicked) {
+                                *date = d;
+                                ui_eat_event();
+                            }
                         }
                     }
                 }
             }
+        }
+    }
+
+    return container;
+}
+
+istruct (DatePickerEntry) {
+    UiBoxData header;
+    Buf *buf;
+};
+
+UiBox *ui_date_picker_entry (String id, Date *date, String hint, F32 width_in_chars) {
+    tmem_new(tm);
+
+    UiBox *container = ui_box_str(0, id) {
+        DatePickerEntry *info = ui_get_box_data(container, sizeof(DatePickerEntry), 256);
+
+        Bool valid = os_is_date_ymd_valid(*date);
+        String date_str = valid ? os_date_to_str(tm, *date) : str("");
+
+        if (! info->buf) {
+            info->buf = buf_new(info->header.mem, date_str);
+        } else if (valid) {
+            buf_clear(info->buf);
+            buf_insert(info->buf, 0, date_str);
+        }
+
+        F32 r = ui->theme->radius.x;
+
+        EventTag tag = ui->event->tag;
+        UiBox *entry = ui_entry(str("entry"), info->buf, width_in_chars, hint.data ? hint : str("Date (e.g., 2000-01-01)"));
+        ui_style_rule("#entry #text_box") ui_style_vec4(UI_RADIUS, vec4(0, r, 0, r));
+        if (! valid) { ui_style_rule("#entry #text_box") ui_style_vec4(UI_TEXT_COLOR, ui->theme->text_color_red); }
+        if (ui->event->tag != tag) *date = os_str_to_date(buf_get_str(info->buf, tm));
+
+        UiBox *button = ui_button(str("button")) {
+            ui_style_vec4(UI_RADIUS, vec4(r, 0, r, 0));
+            ui_style_size(UI_HEIGHT, (UiSize){UI_SIZE_PIXELS, entry->rect.h, 1});
+            ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_EDIT);
+            button->next_style.size.width.strictness = 1;
+
+            Bool opened = button->scratch;
+            if (opened || button->signals.clicked) {
+                ui_tag("press");
+                ui_popup(str("popup"), &opened, false, button) {
+                    Date d = valid ? *date : os_get_date();
+                    ui_date_picker(str("date_picker"), &d);
+                    *date = d;
+                }
+            }
+            button->scratch = opened;
         }
     }
 
@@ -1833,17 +1910,17 @@ UiBox *ui_file_picker (String id, Buf *buf, Bool *shown, Bool multiple, Bool dir
 
 UiBox *ui_file_picker_entry (String id, Buf *buf, String hint, F32 width_in_chars, Bool multiple, Bool dir_only, String start_dir) {
     UiBox *container = ui_box_str(0, id) {
-        UiBox *entry = ui_entry(str("entry"), buf, width_in_chars, hint);
-
         F32 r = ui->theme->radius.x;
+
+        UiBox *entry = ui_entry(str("entry"), buf, width_in_chars, hint);
+        ui_style_rule("#entry #text_box") ui_style_vec4(UI_RADIUS, vec4(0, r, 0, r));
 
         UiBox *button = ui_button(str("button")) {
             ui_style_vec4(UI_RADIUS, vec4(r, 0, r, 0));
             ui_style_size(UI_HEIGHT, (UiSize){UI_SIZE_PIXELS, entry->rect.h, 1});
             ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_SEARCH);
+            button->next_style.size.width.strictness = 1;
         }
-
-        ui_style_rule("#entry #text_box") ui_style_vec4(UI_RADIUS, vec4(0, r, 0, r));
 
         Bool shown = button->scratch;
         if (shown || button->signals.clicked) {

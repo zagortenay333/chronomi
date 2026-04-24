@@ -482,6 +482,10 @@ Void settings_view_build (UiViewInstance *view, Bool visible) {
 
         EventTag event_tag = ui->event->tag;
 
+        ui_style_rule(".row") {
+            ui_style_vec4(UI_BG_COLOR, ui->theme->bg_color_z3);
+        }
+
         build_global_settings();
         build_window_settings();
         build_theme_settings();

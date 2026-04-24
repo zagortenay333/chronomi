@@ -1,0 +1,74 @@
+## Time Tracker File Format
+
+Time tracking data is stored in a custom file format that is somewhat
+similar to JSON although simpler. It is the same format used for the
+config files, and you can read more about in the help applet.
+
+Here is an example including 3 slots:
+
+> slots = [
+      {
+          task = "[x track:0 @bar] Here is a todo task.\n"
+          time = [
+              { date="2026-04-23" seconds=39 }
+          ]
+      }
+      {
+          task = "[track:1 @bar] Here is another one.\n"
+          time = [
+              { date="2026-04-23" seconds=28 }
+          ]
+      }
+      {
+          task = "[track:2 @bar] Walk the dog.\n"
+          time = [
+              { date="2026-04-23" seconds=113 }
+              { date="2026-04-24" seconds=124 }
+          ]
+      }
+  ]
+
+## Tracker Slots
+
+- Time data is stored in "slots".
+- You can only track 1 slot at a time.
+- The tracker refers to a slots by their index in the `slots` array.
+
+## Binding Tasks To Slots
+
+When you time track a todo task, you're really just tracking a slot that was
+assigned to the task.
+
+The task-slot binding is achieved with the task meta attribute `track:id`
+which is placed into your todo file. The id is the index of the slot.
+
+For example, given the todo file:
+
+> [track:0] Take trash out.
+  [track:1] Read that book.
+
+The corresponding time tracker file might look like:
+
+> slots = [
+      {
+          task = "[track:0] Take trash out."
+          time = [
+              { date="2026-04-23" seconds=39 }
+          ]
+      }
+      {
+          task = "[track:1] Read that book."
+          time = [
+              { date="2026-04-23" seconds=28 }
+          ]
+      }
+  ]
+
+For the binding to work, the text in the slot must match the text of the task.
+If there is a mismatch at the point you start tracking a task, you will be asked
+if you want to update the slot's text to match the task or make a new slot while
+keeping the old one in the tracker.
+
+When you start tracking a task for the first time, a new slot will be added to
+the tracker file and the `track` attribute will be added to your todo file task
+automatically.

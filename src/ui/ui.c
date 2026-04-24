@@ -250,28 +250,28 @@ static Void animate_style (UiBox *box) {
     F32 duration = box->next_style.animation_time;
     UiStyleMask mask = box->next_style.animation_mask;
 
-    #define X(T, M, F) if (mask & M) ui_animate_##T(&a->F, b->F, duration); else a->F = b->F;
+    #define A(T, M, F) if (mask & M) ui_animate_##T(&a->F, b->F, duration); else a->F = b->F;
 
-    X(size, UI_MASK_WIDTH, size.width);
-    X(size, UI_MASK_HEIGHT, size.height);
-    X(vec4, UI_MASK_BG_COLOR, bg_color);
-    X(vec4, UI_MASK_BG_COLOR2, bg_color2);
-    X(vec4, UI_MASK_TEXT_COLOR, text_color);
-    X(vec4, UI_MASK_RADIUS, radius);
-    X(vec2, UI_MASK_PADDING, padding);
-    X(f32, UI_MASK_SPACING, spacing);
-    X(vec4, UI_MASK_BORDER_COLOR, border_color);
-    X(vec4, UI_MASK_BORDER_WIDTHS, border_widths);
-    X(vec4, UI_MASK_INSET_SHADOW_COLOR, inset_shadow_color);
-    X(vec4, UI_MASK_OUTSET_SHADOW_COLOR, outset_shadow_color);
-    X(f32, UI_MASK_INSET_SHADOW_WIDTH, inset_shadow_width);
-    X(f32, UI_MASK_OUTSET_SHADOW_WIDTH, outset_shadow_width);
-    X(vec2, UI_MASK_SHADOW_OFFSETS, shadow_offsets);
-    X(f32, UI_MASK_BLUR_RADIUS, blur_radius);
-    X(f32, UI_MASK_FLOAT_X, floating[0]);
-    X(f32, UI_MASK_FLOAT_Y, floating[1]);
+    A(size, UI_MASK_WIDTH, size.width);
+    A(size, UI_MASK_HEIGHT, size.height);
+    A(vec4, UI_MASK_BG_COLOR, bg_color);
+    A(vec4, UI_MASK_BG_COLOR2, bg_color2);
+    A(vec4, UI_MASK_TEXT_COLOR, text_color);
+    A(vec4, UI_MASK_RADIUS, radius);
+    A(vec2, UI_MASK_PADDING, padding);
+    A(f32, UI_MASK_SPACING, spacing);
+    A(vec4, UI_MASK_BORDER_COLOR, border_color);
+    A(vec4, UI_MASK_BORDER_WIDTHS, border_widths);
+    A(vec4, UI_MASK_INSET_SHADOW_COLOR, inset_shadow_color);
+    A(vec4, UI_MASK_OUTSET_SHADOW_COLOR, outset_shadow_color);
+    A(f32, UI_MASK_INSET_SHADOW_WIDTH, inset_shadow_width);
+    A(f32, UI_MASK_OUTSET_SHADOW_WIDTH, outset_shadow_width);
+    A(vec2, UI_MASK_SHADOW_OFFSETS, shadow_offsets);
+    A(f32, UI_MASK_BLUR_RADIUS, blur_radius);
+    A(f32, UI_MASK_FLOAT_X, floating[0]);
+    A(f32, UI_MASK_FLOAT_Y, floating[1]);
 
-    #undef X
+    #undef A
 
     a->axis = b->axis;
     a->align[0] = b->align[0];

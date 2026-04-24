@@ -20,16 +20,14 @@
 App *app;
 
 UiBox *app_show_more_button (String id, U64 *idx, U64 count) {
-    U64 increment = 50;
-
-    if (*idx == 0 && count) *idx = increment;
+    if (*idx == 0 && count) *idx = ui->config->show_more_inc;
     if (*idx >= count) return 0;
 
     UiBox *show_more_button = ui_button(id) {
         ui_style_u32(UI_ALIGN_X, UI_ALIGN_MIDDLE);
         ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PIXELS, ui->config->card_width, 1});
         ui_label(UI_BOX_CLICK_THROUGH, "label", str("Show more"));
-        if (show_more_button->signals.clicked) *idx = sat_add64(*idx, increment);
+        if (show_more_button->signals.clicked) *idx = sat_add64(*idx, ui->config->show_more_inc);
     }
 
     return show_more_button;
@@ -270,7 +268,7 @@ static Void build_global_style_rules () {
         ui_style_vec2(UI_PADDING, ui->theme->padding);
         ui_style_f32(UI_SPACING, ui->theme->spacing);
         ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PCT_PARENT, 1, 0});
-        ui_style_vec4(UI_BG_COLOR, ui->theme->bg_color_z3);
+        ui_style_vec4(UI_BG_COLOR, ui->theme->bg_color_z2);
         ui_style_vec4(UI_BORDER_COLOR, ui->theme->border_color);
         F32 b = ui->theme->border_width.x;
         ui_style_vec4(UI_BORDER_WIDTHS, vec4(b, b, b, 0));
@@ -300,6 +298,7 @@ static Void build_global_style_rules () {
         ui_style_vec4(UI_BG_COLOR, ui->theme->bg_color_z3);
         ui_style_vec4(UI_BORDER_WIDTHS, ui->theme->border_width);
         ui_style_vec4(UI_BORDER_COLOR, ui->theme->border_color);
+        ui_style_u32(UI_ANIMATION, UI_MASK_WIDTH);
     }
 
     ui_style_rule(".card #header") {
@@ -324,6 +323,10 @@ static Void build_global_style_rules () {
     }
 
     ui_style_rule(".card #header #autohide_icons .button.hover *") {
+        ui_style_vec4(UI_TEXT_COLOR, ui->theme->text_color_blue);
+    }
+
+    ui_style_rule(".card #header #autohide_icons .button.press *") {
         ui_style_vec4(UI_TEXT_COLOR, ui->theme->text_color_blue);
     }
 

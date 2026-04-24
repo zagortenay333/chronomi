@@ -54,14 +54,17 @@ Here are all the operands:
 | pin
 | Evals to true if task is pinned.
 |-------------------------------------------------
+| track `num`
+| Evals to true if task has given track attribute.
+|-------------------------------------------------
 
 Here are some examples:
 
 |-------------------------------------------------
-| `@foo & !#1
+| `@foo & !#1`
 | True for tasks with a \@foo tag and no priority 1.
 |-------------------------------------------------
-| `due | #2
+| `due | #2`
 | True for tasks with a due date or priority 2.
 |-------------------------------------------------
 | 'hello' & x

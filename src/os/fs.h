@@ -24,6 +24,7 @@ String  fs_get_full_path           (Mem *, String path);
 String  fs_get_current_working_dir (Mem *);
 Bool    fs_make_file_executable    (String path);
 Bool    fs_file_exists             (String path);
+Bool    fs_is_file                 (String path);
 Bool    fs_dir_exists              (String path);
 FsIter *fs_iter_new                (Mem *, String path, Bool skip_dirs, Bool skip_files);
 Bool    fs_iter_next               (FsIter *);

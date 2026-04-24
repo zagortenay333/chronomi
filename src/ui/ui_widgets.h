@@ -44,6 +44,7 @@ UiBox *ui_int_picker           (String id, I64 *val, I64 min, I64 max, U8 width_
 UiBox *ui_f64_picker           (String id, F64 *val, F64 min, F64 max, U8 width_in_chars);
 UiBox *ui_time_picker          (String id, Time *, UiTimePickerMode);
 UiBox *ui_date_picker          (String id, Date *);
+UiBox *ui_date_picker_entry    (String id, Date *, String hint, F32 width_in_chars);
 UiBox *ui_days_picker          (String id, U8 *);
 UiBox *ui_dropdown             (String id, U64 *selection, SliceString options);
 UiBox *ui_slider_str           (String id, F32 *val);

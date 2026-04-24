@@ -1,6 +1,7 @@
-version = 0 
+version = 1
 editor_width = 300.0
 editor_height = 150.0
+time_tracker_file = ""
 sort = [
     {
          ascending = false

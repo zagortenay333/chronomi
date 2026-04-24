@@ -100,15 +100,10 @@ static Bool match (Config *cfg, ConfigAst *a, ConfigAst *b) {
     }
 
     if (a->tag == CONFIG_AST_ARRAY) {
-        if (a->children.count != b->children.count) {
-            error_typematch(cfg, a, b);
-            return false;
-        }
-
-        array_iter (x, &a->children) {
-            ConfigAst *y = array_get(&b->children, ARRAY_IDX);
-            match(cfg, x, y);
-        }
+        if (a->children.count == 0 || b->children.count == 0) return 0;
+        ConfigAst *achild = array_get(&a->children, 0);
+        ConfigAst *bchild = array_get(&b->children, 0);
+        match(cfg, achild, bchild);
     }
 
     if (a->tag == CONFIG_AST_STRUCT) {

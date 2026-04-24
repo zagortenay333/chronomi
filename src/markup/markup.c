@@ -1,5 +1,6 @@
 #include "markup/markup.h"
 #include "lexer/lexer.h"
+#include "os/time.h"
 
 // A delimiter is a sequence of tokens that delimit an
 // inline element. For example: **.
@@ -519,28 +520,17 @@ static MarkupAst *parse_header (Parser *p) {
 }
 
 static String try_parse_date (Parser *p) {
-    String result = {};
-
     Token *t1 = lex_peek_nth(p->lex, 1);
-    Token *t2 = lex_peek_nth(p->lex, 2);
-    Token *t3 = lex_peek_nth(p->lex, 3);
-    Token *t4 = lex_peek_nth(p->lex, 4);
     Token *t5 = lex_peek_nth(p->lex, 5);
-
-    if (t1->tag != TOKEN_U64 || t1->u64 > 9999) return result;
-    if (t2->tag != '-')                         return result;
-    if (t3->tag != TOKEN_U64 || t3->u64 > 99)   return result;
-    if (t4->tag != '-')                         return result;
-    if (t5->tag != TOKEN_U64 || t5->u64 > 99)   return result;
 
     U64 start   = t1->pos.offset;
     U64 end     = t5->pos.offset + t5->pos.length;
     String text = str_slice(p->text, start, end-start);
-    if (text.count != 10) return (String){};
+
+    if (! os_is_date_ymd_valid(os_str_to_date(text))) return (String){};
 
     for (U64 i = 0; i < 5; ++i) lex_eat(p->lex);
-
-    return text; // @todo We still have not fully checked if the date is valid.
+    return text;
 }
 
 static Bool is_meta_config_delimiter (Parser *p, Token *token) {
@@ -554,7 +544,7 @@ static Bool try_peek_meta_config_delimiter (Parser *p, U64 n) {
 }
 
 static Bool is_closing_square_bracket (Parser *p, Token *token) {
-    return token->tag == ']'; 
+    return token->tag == ']';
 }
 
 static Bool try_parse_meta_config (Parser *p, MarkupAstMetaConfig *config) {
