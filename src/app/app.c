@@ -331,7 +331,10 @@ static Void build_global_style_rules () {
     }
 
     ui_style_rule(".card #body") {
+        F32 r = ui->theme->radius.x;
         ui_style_u32(UI_AXIS, UI_AXIS_VERTICAL);
+        ui_style_f32(UI_EDGE_SOFTNESS, 0);
+        ui_style_vec4(UI_RADIUS, vec4(0, 0, r, r));
         ui_style_f32(UI_SPACING, ui->theme->spacing);
         ui_style_vec2(UI_PADDING, ui->theme->padding);
     }
