@@ -48,8 +48,20 @@ Here are all the operands:
 | x
 | Evals to true if task is completed.
 |-------------------------------------------------
-| due
-| Evals to true if task has a due date.
+| due, due 2000-01-01
+| If no date is provied, it evals true if task
+  has any due date. Else, it evals true if
+  task has given due date.
+|-------------------------------------------------
+| created, created 2000-01-01
+| If no date is provied, it evals true if task
+  has any created date. Else, it evals true if
+  task has given created date.
+|-------------------------------------------------
+| completed, completed 2000-01-01
+| If no date is provied, it evals true if task
+  has any completed date. Else, it evals true if
+  task has given completed date.
 |-------------------------------------------------
 | pin
 | Evals to true if task is pinned.

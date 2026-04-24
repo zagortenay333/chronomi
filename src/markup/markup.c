@@ -751,6 +751,24 @@ static MarkupAst *parse_filter_done (Parser *p) {
 static MarkupAst *parse_filter_due (Parser *p) {
     MarkupAst *node = make_node(p, MARKUP_AST_FILTER_DUE);
     lex_eat(p->lex);
+    lex_try_eat(p->lex, TOKEN_SPACES);
+    cast(MarkupAstFilterDue*, node)->date = try_parse_date(p);
+    return complete_node(p, node);
+}
+
+static MarkupAst *parse_filter_created (Parser *p) {
+    MarkupAst *node = make_node(p, MARKUP_AST_FILTER_CREATED);
+    lex_eat(p->lex);
+    lex_try_eat(p->lex, TOKEN_SPACES);
+    cast(MarkupAstFilterCreated*, node)->date = try_parse_date(p);
+    return complete_node(p, node);
+}
+
+static MarkupAst *parse_filter_completed (Parser *p) {
+    MarkupAst *node = make_node(p, MARKUP_AST_FILTER_COMPLETED);
+    lex_eat(p->lex);
+    lex_try_eat(p->lex, TOKEN_SPACES);
+    cast(MarkupAstFilterCompleted*, node)->date = try_parse_date(p);
     return complete_node(p, node);
 }
 
@@ -800,11 +818,13 @@ static MarkupAst *parse_prefix_filter (Parser *p) {
     case '(':  return parse_filter_parens(p);
     case '#':  return parse_filter_priority(p);
     default:
-        if (str_match(token->text, str("x")))     return parse_filter_done(p);
-        if (str_match(token->text, str("due")))   return parse_filter_due(p);
-        if (str_match(token->text, str("pin")))   return parse_filter_pin(p);
-        if (str_match(token->text, str("hide")))  return parse_filter_hide(p);
-        if (str_match(token->text, str("track"))) return parse_filter_track(p);
+        if (str_match(token->text, str("x")))         return parse_filter_done(p);
+        if (str_match(token->text, str("due")))       return parse_filter_due(p);
+        if (str_match(token->text, str("pin")))       return parse_filter_pin(p);
+        if (str_match(token->text, str("hide")))      return parse_filter_hide(p);
+        if (str_match(token->text, str("track")))     return parse_filter_track(p);
+        if (str_match(token->text, str("created")))   return parse_filter_created(p);
+        if (str_match(token->text, str("completed"))) return parse_filter_completed(p);
     }
 
     return parse_filter_error(p);

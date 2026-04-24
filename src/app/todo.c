@@ -254,11 +254,11 @@ static Bool task_passes_filter_ (Task *task, MarkupAst *filter) {
     MarkupAst *op2 = array_try_get(&filter->children, 1);
 
     switch (filter->tag) {
+    case MARKUP_AST_FILTER_ERROR:    return false;
     case MARKUP_AST_FILTER_NOT:      return !task_passes_filter_(task, op1);
     case MARKUP_AST_FILTER_OR:       return task_passes_filter_(task, op1) || task_passes_filter_(task, op2);
     case MARKUP_AST_FILTER_AND:      return task_passes_filter_(task, op1) && task_passes_filter_(task, op2);
     case MARKUP_AST_FILTER_ANY:      return true;
-    case MARKUP_AST_FILTER_DUE:      return c->flags & MARKUP_AST_META_CONFIG_HAS_DUE;
     case MARKUP_AST_FILTER_DONE:     return c->flags & MARKUP_AST_META_CONFIG_HAS_DONE;
     case MARKUP_AST_FILTER_PIN:      return c->flags & MARKUP_AST_META_CONFIG_HAS_PIN;
     case MARKUP_AST_FILTER_HIDE:     return c->flags & MARKUP_AST_META_CONFIG_HAS_HIDE;
@@ -267,7 +267,24 @@ static Bool task_passes_filter_ (Task *task, MarkupAst *filter) {
     case MARKUP_AST_FILTER_FUZZY:    return str_fuzzy_search(cast(MarkupAstFilterFuzzy*, filter)->needle, text, 0) != INT64_MIN;
     case MARKUP_AST_FILTER_STRING:   return str_search(cast(MarkupAstFilterString*, filter)->needle, text) != ARRAY_NIL_IDX;
     case MARKUP_AST_FILTER_PRIORITY: return (c->flags & MARKUP_AST_META_CONFIG_HAS_PRIORITY) && (cast(MarkupAstFilterPriority*, filter)->priority == c->priority);
-    case MARKUP_AST_FILTER_ERROR:    return false;
+    case MARKUP_AST_FILTER_DUE: {
+        if (! (c->flags & MARKUP_AST_META_CONFIG_HAS_DUE)) return false;
+        String date = cast(MarkupAstFilterDue*, filter)->date;
+        if (! date.data) return true;
+        return str_match(date, c->due);
+    }
+    case MARKUP_AST_FILTER_CREATED: {
+        if (! (c->flags & MARKUP_AST_META_CONFIG_HAS_CREATED)) return false;
+        String date = cast(MarkupAstFilterCreated*, filter)->date;
+        if (! date.data) return true;
+        return str_match(date, c->created);
+    }
+    case MARKUP_AST_FILTER_COMPLETED: {
+        if (! (c->flags & MARKUP_AST_META_CONFIG_HAS_COMPLETED)) return false;
+        String date = cast(MarkupAstFilterCompleted*, filter)->date;
+        if (! date.data) return true;
+        return str_match(date, c->completed);
+    }
     default: badpath;
     }
 }
@@ -784,29 +801,32 @@ static Void build_task (U64 idx, Bool *out_deleted) {
                 ui_style_vec2(UI_PADDING, vec2(ui->theme->padding.x, 0));
 
                 if (task->config->flags & MARKUP_AST_META_CONFIG_HAS_DUE) {
-                    ui_button(str("due_date")) {
+                    UiBox *due_button = ui_button(str("due_date")) {
                         ui_tag("tag_button");
                         String label = astr_fmt(tm, "%s: %.*s", "Due", STR(task->config->due));
                         UiBox *labelb = ui_label(UI_BOX_CLICK_THROUGH, "label", label);
                         ui_style_box_vec4(labelb, UI_TEXT_COLOR, ui->theme->text_color_red);
+                        if (due_button->signals.clicked) push_command(.tag=CMD_VIEW_SEARCH, .str=astr_fmt(context->view_mem, "due %.*s", STR(task->config->due)));
                     }
                 }
 
                 if (task->config->flags & MARKUP_AST_META_CONFIG_HAS_CREATED) {
-                    ui_button(str("created_date")) {
+                    UiBox *created_button = ui_button(str("created_date")) {
                         ui_tag("tag_button");
                         String label = astr_fmt(tm, "%s: %.*s", "Created", STR(task->config->created));
                         UiBox *labelb = ui_label(UI_BOX_CLICK_THROUGH, "label", label);
                         ui_style_box_vec4(labelb, UI_TEXT_COLOR, ui->theme->text_color_green);
+                        if (created_button->signals.clicked) push_command(.tag=CMD_VIEW_SEARCH, .str=astr_fmt(context->view_mem, "created %.*s", STR(task->config->created)));
                     }
                 }
 
                 if (task->config->flags & MARKUP_AST_META_CONFIG_HAS_COMPLETED) {
-                    ui_button(str("completed_date")) {
+                    UiBox *completed_button = ui_button(str("completed_date")) {
                         ui_tag("tag_button");
                         String label = astr_fmt(tm, "%s: %.*s", "Completed", STR(task->config->completed));
                         UiBox *labelb = ui_label(UI_BOX_CLICK_THROUGH, "label", label);
                         ui_style_box_vec4(labelb, UI_TEXT_COLOR, ui->theme->text_color_green);
+                        if (completed_button->signals.clicked) push_command(.tag=CMD_VIEW_SEARCH, .str=astr_fmt(context->view_mem, "completed %.*s", STR(task->config->completed)));
                     }
                 }
             }

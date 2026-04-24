@@ -34,6 +34,8 @@
     X(MARKUP_AST_FILTER_AND, MarkupAstFilterAnd)\
     X(MARKUP_AST_FILTER_ANY, MarkupAstFilterAny)\
     X(MARKUP_AST_FILTER_DUE, MarkupAstFilterDue)\
+    X(MARKUP_AST_FILTER_CREATED, MarkupAstFilterCreated)\
+    X(MARKUP_AST_FILTER_COMPLETED, MarkupAstFilterCompleted)\
     X(MARKUP_AST_FILTER_DONE, MarkupAstFilterDone)\
     X(MARKUP_AST_FILTER_PIN, MarkupAstFilterPin)\
     X(MARKUP_AST_FILTER_HIDE, MarkupAstFilterHide)\
@@ -89,12 +91,12 @@ istruct (MarkupAstMetaConfig) {
     MarkupAstMetaConfigFlags flags;
     MarkupAstAdmonition admonition;
     U32 image_width;
-    String image_path;
     U64 priority;
     U64 track;
+    String image_path;
+    String due;
     String created;
     String completed;
-    String due;
     String spoiler;
     Set(String) tags; // Tags that appear in the header.
     Set(String) body_tags; // Tags that appear in the body.
@@ -116,43 +118,45 @@ istruct (MarkupAst) {
     ArrayMarkupAst children;
 };
 
-istruct (MarkupAstRoot)           { MarkupAst base; };
-istruct (MarkupAstDummy)          { MarkupAst base; };
-istruct (MarkupAstList)           { MarkupAst base; };
-istruct (MarkupAstListItem)       { MarkupAst base; };
-istruct (MarkupAstOrderedList)    { MarkupAst base; };
-istruct (MarkupAstSeparator)      { MarkupAst base; };
-istruct (MarkupAstRawBlock)       { MarkupAst base; };
-istruct (MarkupAstHeader)         { MarkupAst base; U64 size; };
-istruct (MarkupAstParagraph)      { MarkupAst base; };
-istruct (MarkupAstTable)          { MarkupAst base; };
-istruct (MarkupAstTableRow)       { MarkupAst base; };
-istruct (MarkupAstTableCell)      { MarkupAst base; MarkupAstTableCellConfig config; };
-istruct (MarkupAstMeta)           { MarkupAst base; MarkupAstMetaConfig *config; };
-istruct (MarkupAstText)           { MarkupAst base; };
-istruct (MarkupAstSub)            { MarkupAst base; };
-istruct (MarkupAstSup)            { MarkupAst base; };
-istruct (MarkupAstStrike)         { MarkupAst base; };
-istruct (MarkupAstBold)           { MarkupAst base; };
-istruct (MarkupAstLink)           { MarkupAst base; String link, alias; };
-istruct (MarkupAstItalic)         { MarkupAst base; };
-istruct (MarkupAstHighlight)      { MarkupAst base; };
-istruct (MarkupAstRawInline)      { MarkupAst base; Bool monospace; };
-istruct (MarkupAstTagRef)         { MarkupAst base; };
-istruct (MarkupAstFilterNot)      { MarkupAst base; };
-istruct (MarkupAstFilterOr)       { MarkupAst base; };
-istruct (MarkupAstFilterAnd)      { MarkupAst base; };
-istruct (MarkupAstFilterAny)      { MarkupAst base; };
-istruct (MarkupAstFilterDue)      { MarkupAst base; };
-istruct (MarkupAstFilterDone)     { MarkupAst base; };
-istruct (MarkupAstFilterPin)      { MarkupAst base; };
-istruct (MarkupAstFilterHide)     { MarkupAst base; };
-istruct (MarkupAstFilterError)    { MarkupAst base; };
-istruct (MarkupAstFilterTag)      { MarkupAst base; String text; };
-istruct (MarkupAstFilterTrack)    { MarkupAst base; U64 id; };
-istruct (MarkupAstFilterFuzzy)    { MarkupAst base; String needle; };
-istruct (MarkupAstFilterString)   { MarkupAst base; String needle; };
-istruct (MarkupAstFilterPriority) { MarkupAst base; U64 priority; };
+istruct (MarkupAstRoot)            { MarkupAst base; };
+istruct (MarkupAstDummy)           { MarkupAst base; };
+istruct (MarkupAstList)            { MarkupAst base; };
+istruct (MarkupAstListItem)        { MarkupAst base; };
+istruct (MarkupAstOrderedList)     { MarkupAst base; };
+istruct (MarkupAstSeparator)       { MarkupAst base; };
+istruct (MarkupAstRawBlock)        { MarkupAst base; };
+istruct (MarkupAstHeader)          { MarkupAst base; U64 size; };
+istruct (MarkupAstParagraph)       { MarkupAst base; };
+istruct (MarkupAstTable)           { MarkupAst base; };
+istruct (MarkupAstTableRow)        { MarkupAst base; };
+istruct (MarkupAstTableCell)       { MarkupAst base; MarkupAstTableCellConfig config; };
+istruct (MarkupAstMeta)            { MarkupAst base; MarkupAstMetaConfig *config; };
+istruct (MarkupAstText)            { MarkupAst base; };
+istruct (MarkupAstSub)             { MarkupAst base; };
+istruct (MarkupAstSup)             { MarkupAst base; };
+istruct (MarkupAstStrike)          { MarkupAst base; };
+istruct (MarkupAstBold)            { MarkupAst base; };
+istruct (MarkupAstLink)            { MarkupAst base; String link, alias; };
+istruct (MarkupAstItalic)          { MarkupAst base; };
+istruct (MarkupAstHighlight)       { MarkupAst base; };
+istruct (MarkupAstRawInline)       { MarkupAst base; Bool monospace; };
+istruct (MarkupAstTagRef)          { MarkupAst base; };
+istruct (MarkupAstFilterNot)       { MarkupAst base; };
+istruct (MarkupAstFilterOr)        { MarkupAst base; };
+istruct (MarkupAstFilterAnd)       { MarkupAst base; };
+istruct (MarkupAstFilterAny)       { MarkupAst base; };
+istruct (MarkupAstFilterDue)       { MarkupAst base; String date; };
+istruct (MarkupAstFilterCreated)   { MarkupAst base; String date; };
+istruct (MarkupAstFilterCompleted) { MarkupAst base; String date; };
+istruct (MarkupAstFilterDone)      { MarkupAst base; };
+istruct (MarkupAstFilterPin)       { MarkupAst base; };
+istruct (MarkupAstFilterHide)      { MarkupAst base; };
+istruct (MarkupAstFilterError)     { MarkupAst base; };
+istruct (MarkupAstFilterTag)       { MarkupAst base; String text; };
+istruct (MarkupAstFilterTrack)     { MarkupAst base; U64 id; };
+istruct (MarkupAstFilterFuzzy)     { MarkupAst base; String needle; };
+istruct (MarkupAstFilterString)    { MarkupAst base; String needle; };
+istruct (MarkupAstFilterPriority)  { MarkupAst base; U64 priority; };
 
 extern CString markup_ast_tag_to_cstr    [MARKUP_AST_TAG_COUNT];
 extern U64     markup_ast_get_node_size  [MARKUP_AST_TAG_COUNT];
