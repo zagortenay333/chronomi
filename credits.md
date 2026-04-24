@@ -1,8 +1,12 @@
-The architecture of the application is heavily borrowing from the
-following amazing projects:
+The ui system borrows heavily from the following amazing projects:
 
   - https://github.com/orca-app/orca
   - https://github.com/EpicGamesExt/raddebugger
+
+More resources about the ui can be found at:
+
+  - https://www.dgtlgrove.com/t/ui
+  - https://orca-app.dev/
 
 Sound files picked from:
 
@@ -16,9 +20,4 @@ Font files are picked from:
 
 The icons font is built using the awesome:
 
-  - https://icomoon.io/ 
-
-Misc useful resources:
-
-  - https://www.dgtlgrove.com/t/ui
-  - https://orca-app.dev/
+  - https://icomoon.io/
