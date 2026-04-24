@@ -1,10 +1,3 @@
-// solarized dark
-// solarized light
-// dracula
-// nord
-// catpuccin
-// deleting tasks is broken
-
 #include "app/settings.h"
 #include "ui/ui_widgets.h"
 #include "config/config.h"
@@ -273,7 +266,9 @@ static UiBox *build_theme_presets_picker (String id) {
                         ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PIXELS, 200, 1});
                         if (button->signals.hovered) ui_style_vec4(UI_BG_COLOR, ui->theme->bg_color_z3);
 
-                        ui_label(UI_BOX_CLICK_THROUGH, "label", str_cut_suffix(it->current_file_name, str(".txt")));
+                        String label = str_cut_suffix(it->current_file_name, str(".txt"));
+                        label = str_replace_all(tm, label, str("_"), str(" "));
+                        ui_label(UI_BOX_CLICK_THROUGH, "label", label);
 
                         ui_hspacer();
 
