@@ -129,6 +129,7 @@ ienum (CommandTag, U8) {
     CMD_NEW_TASK_FLAGS,
     CMD_ADD_TASKS,
     CMD_DEL_TASK,
+    CMD_TOGGLE_TASK_DONE,
     CMD_NEW_DECK,
     CMD_DEL_DECK,
     CMD_ACTIVATE_DECK,
@@ -698,7 +699,7 @@ static Void build_task (U64 idx, Bool *out_deleted) {
             Bool checked = task->config->flags & MARKUP_AST_META_CONFIG_HAS_DONE;
             UiBox *checkbox = ui_checkbox("checkbox", &checked);
             if (checkbox->signals.clicked) {
-                push_command(.tag=CMD_NEW_TASK_FLAGS, .idx=idx, .flags=(task->config->flags ^ MARKUP_AST_META_CONFIG_HAS_DONE));
+                push_command(.tag=CMD_TOGGLE_TASK_DONE, .idx=idx);
                 push_command(.tag=CMD_VIEW_KANBAN);
             }
 
@@ -1698,15 +1699,6 @@ static Void execute_commands () {
             save_config(cmd->save_deck);
         } break;
 
-        case CMD_NEW_TASK_FLAGS: {
-            Task *task = array_ref(&context->tasks, cmd->idx);
-            task->config->flags = cmd->flags;
-            task_serialize(cmd->idx);
-            if (is_task_tracked(cmd->idx)) stop_tracking();
-            sort_tasks();
-            if (! cmd->skip_config_save) save_config(true);
-        } break;
-
         case CMD_ADD_TASKS: {
             add_tasks(cmd->str, false);
             sort_tasks();
@@ -1717,6 +1709,32 @@ static Void execute_commands () {
             array_remove(&context->tasks, cmd->idx);
             context->config_mem_fragmentation++;
             if (is_task_tracked(cmd->idx)) stop_tracking();
+            if (! cmd->skip_config_save) save_config(true);
+        } break;
+
+        case CMD_NEW_TASK_FLAGS: {
+            Task *task = array_ref(&context->tasks, cmd->idx);
+            task->config->flags = cmd->flags;
+            task_serialize(cmd->idx);
+            if (is_task_tracked(cmd->idx)) stop_tracking();
+            sort_tasks();
+            if (! cmd->skip_config_save) save_config(true);
+        } break;
+
+        case CMD_TOGGLE_TASK_DONE: {
+            Task *task = array_ref(&context->tasks, cmd->idx);
+            if (task->config->flags & MARKUP_AST_META_CONFIG_HAS_DONE) {
+                task->config->flags &= ~MARKUP_AST_META_CONFIG_HAS_DONE;
+                task->config->flags &= ~MARKUP_AST_META_CONFIG_HAS_COMPLETED;
+                context->config_mem_fragmentation++; // In case we leak config->completed.
+            } else {
+                task->config->flags |= MARKUP_AST_META_CONFIG_HAS_DONE;
+                task->config->flags |= MARKUP_AST_META_CONFIG_HAS_COMPLETED;
+                task->config->completed = os_date_to_str(context->config_mem, os_get_date());
+            }
+            if (is_task_tracked(cmd->idx)) stop_tracking();
+            task_serialize(cmd->idx);
+            sort_tasks();
             if (! cmd->skip_config_save) save_config(true);
         } break;
 
