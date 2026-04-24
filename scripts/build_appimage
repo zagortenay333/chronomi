@@ -6,6 +6,7 @@ cd "${BASH_SOURCE%/*}"
 mkdir -p AppDir/usr/bin
 
 cp -r ../data AppDir
+rm -rf AppDir/data/screenshots
 cp AppRun AppDir
 cp ../chronomi.bin AppDir/usr/bin
 cp ../data/chronomi.png AppDir

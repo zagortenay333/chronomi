@@ -1,8 +1,3 @@
-// @todo
-// - see whether we can use text_view in tag buttons to avoid text cuttof
-// - make the created/completed/due date buttons do something
-// - don't include screenshots in the appimage
-
 #include "app/app.h"
 #include "ui/ui_widgets.h"
 #include "ui/ui_markup_view.h"
