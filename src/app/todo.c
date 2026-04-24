@@ -777,7 +777,7 @@ static Void build_task (U64 idx, Bool *out_deleted) {
         }
 
         if (task->config->flags & (MARKUP_AST_META_CONFIG_HAS_DUE | MARKUP_AST_META_CONFIG_HAS_CREATED | MARKUP_AST_META_CONFIG_HAS_COMPLETED)) {
-            ui_box(0, "padding_dates") ui_style_size(UI_HEIGHT, (UiSize){UI_SIZE_PIXELS, ui->theme->padding.y, 1});
+            ui_box(UI_BOX_INVISIBLE_BG, "padding_dates") ui_style_size(UI_HEIGHT, (UiSize){UI_SIZE_PIXELS, ui->theme->padding.y, 1});
 
             ui_box(0, "dates") {
                 ui_style_f32(UI_SPACING, ui->theme->spacing);
@@ -813,7 +813,7 @@ static Void build_task (U64 idx, Bool *out_deleted) {
         }
 
         if (task->config->tags.umap.count) {
-            ui_box(0, "padding_tags") ui_style_size(UI_HEIGHT, (UiSize){UI_SIZE_PIXELS, ui->theme->padding.y, 1});
+            ui_box(UI_BOX_INVISIBLE_BG, "padding_tags") ui_style_size(UI_HEIGHT, (UiSize){UI_SIZE_PIXELS, ui->theme->padding.y, 1});
 
             ui_box(0, "tags") {
                 ui_style_u32(UI_AXIS, UI_AXIS_VERTICAL);
