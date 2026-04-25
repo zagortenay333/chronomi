@@ -416,7 +416,7 @@ UiBox *ui_toggle (CString id, Bool *val) {
             ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PIXELS, ks, 1});
             ui_style_size(UI_HEIGHT, (UiSize){UI_SIZE_PIXELS, ks, 1});
             ui_style_vec4(UI_RADIUS, vec4(ks/2, ks/2, ks/2, ks/2));
-            ui_style_vec4(UI_BG_COLOR, ui->theme->text_color_normal);
+            ui_style_vec4(UI_BG_COLOR, ui->theme->slider_knob_color);
             ui_style_f32(UI_OUTSET_SHADOW_WIDTH, ui->theme->out_shadow_width);
             ui_style_vec4(UI_OUTSET_SHADOW_COLOR, ui->theme->out_shadow_color);
             ui_style_u32(UI_ANIMATION, UI_MASK_FLOAT_X);

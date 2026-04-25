@@ -984,7 +984,7 @@ Void ui_frame (Void(*app_build)(), F64 dt) {
                             ui_style_f32(UI_FLOAT_X, 0);
                             ui_style_u32(UI_ALIGN_X, UI_ALIGN_MIDDLE);
                             ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PCT_PARENT, 1, 0});
-                            ui_label_extra(0, "title", str("Chronomi"), ui->config->font_path_bold, ui->config->font_size, 0);
+                            ui_label_extra(UI_BOX_CLICK_THROUGH, "title", str("Chronomi"), ui->config->font_path_bold, ui->config->font_size, 0);
                         }
 
                         ui_style_rule(".button") {
