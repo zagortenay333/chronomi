@@ -779,25 +779,30 @@ static Void build_task (U64 idx, Bool *out_deleted) {
                     ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_HIDDEN);
                 }
             }
-
-            if (task->config->flags & MARKUP_AST_META_CONFIG_HAS_PRIORITY) {
-                String label = astr_fmt(tm, "#%lu", task->config->priority);
-                UiBox *labelb = ui_label(UI_BOX_CLICK_THROUGH, "label", label);
-                ui_style_box_vec4(labelb, UI_TEXT_COLOR, ui->theme->text_color_red);
-            }
         }
 
         ui_style_rule(".tag_button") {
             ui_style_vec4(UI_BG_COLOR, ui->theme->bg_color_z2);
-            ui_style_vec2(UI_PADDING, vec2(3, 2));
+            ui_style_vec2(UI_PADDING, vec2(4, 2));
         }
 
-        if (task->config->flags & (MARKUP_AST_META_CONFIG_HAS_DUE | MARKUP_AST_META_CONFIG_HAS_CREATED | MARKUP_AST_META_CONFIG_HAS_COMPLETED)) {
+        if (task->config->flags & (MARKUP_AST_META_CONFIG_HAS_PRIORITY | MARKUP_AST_META_CONFIG_HAS_DUE | MARKUP_AST_META_CONFIG_HAS_CREATED | MARKUP_AST_META_CONFIG_HAS_COMPLETED)) {
             ui_box(UI_BOX_INVISIBLE_BG, "padding_dates") ui_style_size(UI_HEIGHT, (UiSize){UI_SIZE_PIXELS, ui->theme->padding.y, 1});
 
             ui_box(0, "dates") {
                 ui_style_f32(UI_SPACING, ui->theme->spacing);
                 ui_style_vec2(UI_PADDING, vec2(ui->theme->padding.x, 0));
+
+                if (task->config->flags & MARKUP_AST_META_CONFIG_HAS_PRIORITY) {
+                    UiBox *priority_button = ui_button(str("priority_button")) {
+                        ui_tag("tag_button");
+                        priority_button->next_style.size.width.strictness = 1;
+                        String label = astr_fmt(tm, "#%lu", task->config->priority);
+                        UiBox *labelb = ui_label(UI_BOX_CLICK_THROUGH, "label", label);
+                        ui_style_box_vec4(labelb, UI_TEXT_COLOR, ui->theme->text_color_red);
+                        if (priority_button->signals.clicked) push_command(.tag=CMD_VIEW_SEARCH, .str=astr_fmt(context->view_mem, "#%lu", task->config->priority));
+                    }
+                }
 
                 if (task->config->flags & MARKUP_AST_META_CONFIG_HAS_DUE) {
                     UiBox *due_button = ui_button(str("due_date")) {
