@@ -20,11 +20,6 @@ istruct (Deck) {
 array_typedef(Card, Card);
 array_typedef(Deck, Deck);
 
-istruct (SearchResult) {
-    I64 score;
-    U64 idx;
-};
-
 ienum (ViewTag, U8) {
     VIEW_MAIN,
     VIEW_EXAM,
@@ -300,12 +295,6 @@ static Void build_card (U64 card_idx, Bool *out_card_deleted, Bool reactive) {
     }
 }
 
-static Int cmp_search_results (Void *a_, Void *b_) {
-    SearchResult *a = a_;
-    SearchResult *b = b_;
-    return (a->score < b->score) ? -1 : (a->score > b->score) ? 1 : 0;
-}
-
 static Void build_view_search_cards () {
     Auto view = &context->view.search_cards;
 
@@ -368,12 +357,14 @@ static Void build_view_search_cards () {
                 ui_label(UI_BOX_CLICK_THROUGH, "label", str("Apply"));
                 if (apply_button->signals.clicked) {
                     if (view->delete_searched) {
-                        array_iter (c, &view->searched_cards) push_command(.tag=CMD_DEL_CARD, .idx=c.idx, .skip_config_save=!ARRAY_ITER_DONE);
+                        array_sort_cmp(&view->searched_cards, app_cmp_search_results_on_idx);
+                        array_iter_back (it, &view->searched_cards) push_command(.tag=CMD_DEL_CARD, .idx=it.idx, .skip_config_save=true);
+                        view->searched_cards.count = 0;
                     } else if (view->move_to_bucket != -1) {
                         array_iter (c, &view->searched_cards) push_command(.tag=CMD_MOVE_CARD, .idx=c.idx, .card.bucket=view->move_to_bucket, .skip_config_save=!ARRAY_ITER_DONE);
                     }
 
-                    push_command(.tag=CMD_VIEW_MAIN);
+                    push_command(.tag=CMD_SAVE_CONFIG);
                 }
             }
         }
@@ -408,7 +399,7 @@ static Void build_view_search_cards () {
             }
         }
 
-        if (view->fuzzy_search) array_sort_cmp(&view->searched_cards, cmp_search_results);
+        if (view->fuzzy_search) array_sort_cmp(&view->searched_cards, app_cmp_search_results);
 
         Bool card_deleted = false;
 
@@ -445,15 +436,6 @@ static Void build_view_deck_browser () {
                 ui_tag("row");
                 ui_file_picker_entry(str("picker"), view->export_buf, str("Export decks to..."), -1, false, true, (String){});
                 ui_button_info_popup(str("help_button"), true, str("data/docs/flashcards_csv.txt"), true);
-            }
-        }
-
-        ui_box(UI_BOX_INVISIBLE_BG, "row_group2") {
-            ui_box(0, "delete_searched") {
-                ui_tag("row");
-                ui_label(0, "tile", str("Delete searched decks"));
-                ui_hspacer();
-                ui_checkbox("checkbox", &view->delete_searched);
             }
         }
 
@@ -505,7 +487,7 @@ static Void build_view_deck_browser () {
                 if (score != INT64_MIN) array_push_lit(&view->searched_decks, .score=score, .idx=ARRAY_IDX);
             }
 
-            array_sort_cmp(&view->searched_decks, cmp_search_results);
+            array_sort_cmp(&view->searched_decks, app_cmp_search_results);
         }
 
         Bool deck_deleted = false;

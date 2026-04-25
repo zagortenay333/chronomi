@@ -46,11 +46,6 @@ istruct (KanbanColumn) {
     U64 show_more_idx;
 };
 
-istruct (SearchResult) {
-    I64 score;
-    U64 idx;
-};
-
 istruct (FilteredTrackerSlot) {
     U64 idx;
     Seconds total;
@@ -95,10 +90,13 @@ istruct (View) {
         } editor;
 
         struct {
-            Buf *buf;
+            Bool delete_searched;
+            Bool pin_searched;
+            Bool hide_searched;
+            Bool check_searched;
             U64 buf_version;
             U64 show_more_idx;
-            Bool delete_searched;
+            Buf *buf;
             ArrayU64 searched;
         } search;
 
@@ -980,14 +978,9 @@ static Void build_view_editor () {
     }
 }
 
-static Int cmp_search_results (Void *a_, Void *b_) {
-    SearchResult *a = a_;
-    SearchResult *b = b_;
-    return (a->score < b->score) ? -1 : (a->score > b->score) ? 1 : 0;
-}
-
 static Void build_view_search () {
     tmem_new(tm);
+
     Auto view = &context->view.search;
 
     ui_scroll_box(str("left_box"), true) {
@@ -1001,11 +994,34 @@ static Void build_view_search () {
         }
 
         ui_box(UI_BOX_INVISIBLE_BG, "row_group") {
-            ui_box(0, "row") {
+            ui_style_u32(UI_AXIS, UI_AXIS_VERTICAL);
+
+            ui_box(0, "delete") {
                 ui_tag("row");
                 ui_label(0, "title", str("Delete searched tasks"));
                 ui_hspacer();
                 ui_checkbox("checkbox", &view->delete_searched);
+            }
+
+            ui_box(0, "pin") {
+                ui_tag("row");
+                ui_label(0, "title", str("Mark searched tasks as pinned"));
+                ui_hspacer();
+                ui_checkbox("checkbox", &view->pin_searched);
+            }
+
+            ui_box(0, "hide") {
+                ui_tag("row");
+                ui_label(0, "title", str("Mark searched tasks as hidden"));
+                ui_hspacer();
+                ui_checkbox("checkbox", &view->hide_searched);
+            }
+
+            ui_box(0, "check") {
+                ui_tag("row");
+                ui_label(0, "title", str("Mark searched tasks as done"));
+                ui_hspacer();
+                ui_checkbox("checkbox", &view->check_searched);
             }
         }
 
@@ -1019,7 +1035,24 @@ static Void build_view_search () {
             UiBox *apply_button = ui_button(str("apply")) {
                 ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PCT_PARENT, 1, 0});
                 ui_label(UI_BOX_CLICK_THROUGH, "label", str("Apply"));
-                if (apply_button->signals.clicked) array_iter (idx, &view->searched) push_command(.tag=CMD_DEL_TASK, .idx=idx, .skip_config_save=!ARRAY_ITER_DONE);
+                if (apply_button->signals.clicked) {
+                    if (view->delete_searched) {
+                        array_sort(&view->searched);
+                        array_iter_back (idx, &view->searched) push_command(.tag=CMD_DEL_TASK, .idx=idx, .skip_config_save=true);
+                        view->searched.count = 0;
+                    } else {
+                        array_iter (idx, &view->searched) {
+                            Task *task = array_ref(&context->tasks, idx);
+                            MarkupAstMetaConfigFlags flags = task->config->flags;
+                            if (view->pin_searched) flags |= MARKUP_AST_META_CONFIG_HAS_PIN;
+                            if (view->hide_searched) flags |= MARKUP_AST_META_CONFIG_HAS_HIDE;
+                            if (view->check_searched) flags |= MARKUP_AST_META_CONFIG_HAS_DONE;
+                            push_command(.tag=CMD_NEW_TASK_FLAGS, .idx=idx, .flags=flags, .skip_config_save=true);
+                        }
+                    }
+
+                    push_command(.tag=CMD_SAVE_CONFIG);
+                }
             }
         }
     }
@@ -1248,7 +1281,7 @@ static Void build_view_deck_browser () {
                 if (score != INT64_MIN) array_push_lit(&view->searched, .score=score, .idx=ARRAY_IDX);
             }
 
-            array_sort_cmp(&view->searched, cmp_search_results);
+            array_sort_cmp(&view->searched, app_cmp_search_results);
         }
 
         array_iter (d, &view->searched) {
@@ -1864,7 +1897,7 @@ static Void execute_commands () {
         } break;
 
         case CMD_VIEW_SEARCH: {
-            String needle = cmd->str.data ? str_copy(tm, cmd->str) : str("");
+            String needle = cmd->str.data ? str_copy(tm, cmd->str) : str("*");
             destroy_current_view();
             context->view.tag = VIEW_SEARCH;
             context->view.search.buf = buf_new(context->view_mem, needle);

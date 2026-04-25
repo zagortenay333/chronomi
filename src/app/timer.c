@@ -25,11 +25,6 @@ istruct (Timer) {
     Sound *sound_id;
 };
 
-istruct (SearchResult) {
-    I64 score;
-    U64 idx;
-};
-
 ienum (ViewTag, U8) {
     VIEW_MAIN,
     VIEW_SEARCH,
@@ -256,12 +251,6 @@ static Void build_timer (U64 idx, Bool *out_card_deleted) {
     }
 }
 
-static Int cmp_search_results (Void *a_, Void *b_) {
-    SearchResult *a = a_;
-    SearchResult *b = b_;
-    return (a->score < b->score) ? -1 : (a->score > b->score) ? 1 : 0;
-}
-
 static Void build_view_search () {
     Auto view = &context->view.search;
 
@@ -291,8 +280,12 @@ static Void build_view_search () {
                 ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PCT_PARENT, 1, 0});
                 ui_label(UI_BOX_CLICK_THROUGH, "label", str("Apply"));
                 if (apply_button->signals.clicked) {
-                    if (view->delete_searched) array_iter (it, &view->searched) push_command(.tag=CMD_DEL, .idx=it.idx, .skip_config_save=!ARRAY_ITER_DONE);
-                    push_command(.tag=CMD_VIEW_MAIN);
+                    if (view->delete_searched) {
+                        array_sort_cmp(&view->searched, app_cmp_search_results_on_idx);
+                        array_iter_back (it, &view->searched) push_command(.tag=CMD_DEL, .idx=it.idx, .skip_config_save=true);
+                        view->searched.count = 0;
+                        push_command(.tag=CMD_SAVE_CONFIG);
+                    }
                 }
             }
         }
@@ -318,7 +311,7 @@ static Void build_view_search () {
                 if (score != INT64_MIN) array_push_lit(&view->searched, .score=score, .idx=ARRAY_IDX);
             }
 
-            array_sort_cmp(&view->searched, cmp_search_results);
+            array_sort_cmp(&view->searched, app_cmp_search_results);
         }
 
         Bool deleted = false;

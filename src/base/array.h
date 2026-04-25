@@ -87,7 +87,7 @@ Int    uarray_cmp_u64                      (Void *, Void *);
 #define uslice_static(S)                   (&(USlice){ .data=cast(U8*, S), .count=sizeof(S)/sizeof(*(S)) })
 #define array_esize(A)                     (sizeof(AElem(A)))
 #define array_size(A)                      (array_esize(A) * (A)->count)
-#define array_cmp_fn(A)                    typematch(AElem(A), U64:uarray_cmp_u8, U64:uarray_cmp_u32, U64:uarray_cmp_u64)
+#define array_cmp_fn(A)                    typematch(AElem(A), U8:uarray_cmp_u8, U32:uarray_cmp_u32, U64:uarray_cmp_u64)
 
 #define array_bounds_check(A, I)           assert_always((I) < (A)->count)
 #define array_ref(A, I)                    ({ def2(a, i, A, acast(U64,I)); array_bounds_check(a, i); &a->data[i]; })

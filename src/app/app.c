@@ -19,6 +19,18 @@
 
 App *app;
 
+Int app_cmp_search_results (Void *a_, Void *b_) {
+    SearchResult *a = a_;
+    SearchResult *b = b_;
+    return (a->score < b->score) ? -1 : (a->score > b->score) ? 1 : 0;
+}
+
+Int app_cmp_search_results_on_idx (Void *a_, Void *b_) {
+    SearchResult *a = a_;
+    SearchResult *b = b_;
+    return (a->idx < b->idx) ? -1 : (a->idx > b->idx) ? 1 : 0;
+}
+
 UiBox *app_show_more_button (String id, U64 *idx, U64 count) {
     if (*idx == 0 && count) *idx = ui->config->show_more_inc;
     if (*idx >= count) return 0;
