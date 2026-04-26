@@ -329,16 +329,16 @@ static Void build_global_style_rules () {
         ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_CHILDREN_SUM, 0, 1});
     }
 
-    ui_style_rule(".card #header #autohide_icons .button.focus") {
+    ui_style_rule(".card #autohide_icons .button.focus") {
         ui_style_vec4(UI_BORDER_COLOR, ui->theme->border_color_focus);
         ui_style_vec4(UI_BORDER_WIDTHS, ui->theme->border_width_focus);
     }
 
-    ui_style_rule(".card #header #autohide_icons .button.hover *") {
+    ui_style_rule(".card #autohide_icons .button.hover *") {
         ui_style_vec4(UI_TEXT_COLOR, ui->theme->text_color_blue);
     }
 
-    ui_style_rule(".card #header #autohide_icons .button.press *") {
+    ui_style_rule(".card #autohide_icons .button.press *") {
         ui_style_vec4(UI_TEXT_COLOR, ui->theme->text_color_blue);
     }
 

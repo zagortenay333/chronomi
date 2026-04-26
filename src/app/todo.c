@@ -1815,10 +1815,24 @@ static Void build_view_kanban () {
                     ui_style_f32(UI_SPACING, ui->theme->spacing);
 
                     if (column->with_header) {
-                        ui_box(0, "header") {
+                        UiBox *header = ui_box(UI_BOX_REACTIVE|UI_BOX_CAN_FOCUS, "header") {
                             ui_tag("card");
+                            ui_style_rule(".card") ui_style_u32(UI_AXIS, UI_AXIS_HORIZONTAL);
                             ui_style_vec2(UI_PADDING, ui->theme->padding);
+
                             ui_label_extra(0, "filter", column->filter_text, ui->config->font_path_bold, ui->config->font_size, false);
+                            ui_hspacer();
+
+                            if (ui_within_box(header->rect, ui->mouse) || (ui->focused && ui_is_descendant(header, ui->focused))) {
+                                ui_box(0, "autohide_icons") {
+                                    UiBox *search_button = ui_box(UI_BOX_CAN_FOCUS|UI_BOX_REACTIVE, "search") {
+                                        ui_tag("button");
+                                        ui_icon(UI_BOX_CLICK_THROUGH, "icon", UI_ICON_SEARCH);
+                                        search_button->next_style.size.width.strictness = 1;
+                                        if (search_button->signals.clicked) push_command(.tag=CMD_VIEW_SEARCH, .str=column->filter_text);
+                                    }
+                                }
+                            }
                         }
                     }
 
