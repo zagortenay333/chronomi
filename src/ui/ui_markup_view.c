@@ -237,7 +237,7 @@ static Void build_inline (MarkupView *info, MarkupAst *node) {
         UiMarkupRange *range = array_push_slot(&info->paragraph_context->ranges);
         range->markup = default_markup;
         range->markup.flags |= UI_MARKUP_BOLD;
-        range->markup.fg_color = ui->theme->text_color_red;
+        range->markup.fg_color = ui->theme->text_color_yellow;
         range->start = info->paragraph_context->length;
         U64 idx = range - info->paragraph_context->ranges.data;
         array_iter (child, &node->children) build_inline(info, child);
