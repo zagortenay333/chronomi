@@ -497,6 +497,7 @@ static Void load_time_tracker_data () {
     context->tracker_slots.count = 0;
 
     Config *cfg = config_parse(tm, filepath);
+    if (cfg->root->children.count == 0) return;
 
     ConfigAst *slots = config_get_array(cfg, cfg->root, "slots");
     array_iter (slot_ast, &slots->children) {
@@ -1538,10 +1539,11 @@ static Void build_view_time_tracker () {
         ui_tag("sidebar");
         ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PCT_PARENT, .35, 1});
 
+        EventTag etag = ui->event->tag;
+
         ui_box(UI_BOX_INVISIBLE_BG, "row_group1") {
             ui_box(0, "row1") {
                 ui_tag("row");
-                EventTag tag = ui->event->tag;
 
                 ui_file_picker_entry(str("tracker_file"), context->time_tracker_file, str("Time tracker file..."), -1, false, false, (String){});
 
@@ -1553,7 +1555,7 @@ static Void build_view_time_tracker () {
 
                 if (! is_file) {
                     ui_style_rule("#entry #text_box") ui_style_vec4(UI_TEXT_COLOR, ui->theme->text_color_red);
-                } else if (ui->event->tag != tag) {
+                } else if (ui->event->tag != etag) {
                     stop_tracking();
                     load_time_tracker_data();
                     save_config(false);
@@ -1563,8 +1565,6 @@ static Void build_view_time_tracker () {
 
         ui_box(UI_BOX_INVISIBLE_BG, "row_group2") {
             ui_style_u32(UI_AXIS, UI_AXIS_VERTICAL);
-
-            EventTag etag = ui->event->tag;
 
             ui_box(0, "filter_expression") {
                 ui_tag("row");
