@@ -20,6 +20,8 @@ Vec3 normalize_v3 (Vec3 v)                { return mul(1.f/len(v), v); }
 Vec3 lerp_v3      (Vec3 a, Vec3 b, F32 t) { return vec3(lerp_f32(a.x, b.x, t), lerp_f32(a.y, b.y, t), lerp_f32(a.z, b.z, t)); }
 Void print_v3     (Vec3 v, AString *a, CString p, CString s) { astr_push_fmt(a, "%s(x=%f, y=%f, z=%f)%s", p, v.x, v.y, v.z, s); }
 
+Vec4 lerp_v4      (Vec4 a, Vec4 b, F32 t) { return vec4(lerp_f32(a.x, b.x, t), lerp_f32(a.y, b.y, t), lerp_f32(a.z, b.z, t), lerp_f32(a.w, b.w, t)); }
+
 // =============================================================================
 // Matrices:
 // =============================================================================

@@ -107,6 +107,7 @@ istruct (View) {
         } deck_browser;
 
         struct {
+            I64 heatmap_year;
             U64 show_more_idx;
             Buf *filter_buf;
             Date since;
@@ -1395,6 +1396,139 @@ static Void compute_time_tracker_stats () {
     }
 }
 
+static Void build_heatmap () {
+    tmem_new(tm);
+
+    assert_dbg(context->view.tag == VIEW_TIME_TRACKER);
+    Auto view = &context->view.time_tracker;
+
+    Date today = os_get_date();
+    U32 month_spacing = 10;
+    U32 day_spacing = 2;
+
+    ui_box(0, "container") {
+        ui_tag("card");
+
+        F32 b = ui->theme->border_width.x;
+        ui_style_vec2(UI_PADDING, vec2(b, b));
+
+        ui_box(0, "header") {
+            ui_label(0, "label", str("Day totals"));
+            ui_hspacer();
+            UiBox *picker = ui_int_picker(str("picker"), &view->heatmap_year, 0, 9999, 4);
+            picker->next_style.size.width.strictness = 1;
+        }
+
+        ui_scroll_box(str("inner"), true) {
+            ui_style_f32(UI_SPACING, month_spacing);
+            ui_style_vec2(UI_PADDING, vec2(ui->theme->padding.x + 4, ui->theme->padding.x + 4));
+
+            ui_style_rule(".cell") {
+                ui_style_f32(UI_EDGE_SOFTNESS, 0);
+                ui_style_vec4(UI_BORDER_COLOR, ui->theme->border_color);
+                ui_style_vec4(UI_BORDER_WIDTHS, ui->theme->border_width);
+                ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PIXELS, ui->config->font_size, 1});
+                ui_style_size(UI_HEIGHT, (UiSize){UI_SIZE_PIXELS, ui->config->font_size, 1});
+            }
+
+            U32 year = view->heatmap_year;
+            CString day_labels[] = {"Sun", "Mon","Tue","Wed","Thu","Fri","Sat"};
+            CString month_labels[] = {"January","February","March","April","May","June","July","August","September","October","November","December"};
+
+            for (U32 month = 1; month < 13; ++month) {
+                U32 week = 0;
+                U32 wday = os_first_weekday(year, month);
+                U32 days = os_days_in_month(year, month);
+
+                ui_box_fmt(0, "month%lu", month) {
+                    ui_style_u32(UI_AXIS, UI_AXIS_VERTICAL);
+                    ui_style_f32(UI_SPACING, ui->theme->spacing);
+                    ui_label(0, "label", str(month_labels[month-1]));
+
+                    ui_box_fmt(0, "grid") {
+                        ui_style_f32(UI_SPACING, day_spacing);
+
+                        UiBox *column = ui_box(0, "column0") {
+                            ui_style_u32(UI_AXIS, UI_AXIS_VERTICAL);
+                            ui_style_f32(UI_SPACING, day_spacing);
+                        }
+
+                        for (U32 i = 0; i < wday; ++i) {
+                            ui_parent(column) { ui_box_fmt(UI_BOX_INVISIBLE_BG, "cell%lu", i) ui_tag("cell"); }
+                        }
+
+                        for (U32 day = 1; day < days+1; ++day) {
+                            if (wday == 7) {
+                                wday = 0;
+                                week++;
+                                column = ui_box_fmt(0, "column%lu", week) {
+                                    ui_style_u32(UI_AXIS, UI_AXIS_VERTICAL);
+                                    ui_style_f32(UI_SPACING, day_spacing);
+                                }
+                            }
+
+                            ui_parent(column) {
+                                UiBox *cell = ui_box_fmt(UI_BOX_REACTIVE, "cell%lu", wday) {
+                                    ui_tag("cell");
+
+                                    Date date = {year, month, day, wday};
+                                    Seconds total = 0;
+
+                                    array_iter (it, &view->filtered_slots, *) {
+                                        TimeTrackerSlot *slot = array_ref(&context->tracker_slots, it->idx);
+                                        array_iter (it, &slot->time, *) {
+                                            if (os_date_cmp(it->date, date) == 0) {
+                                                total = sat_add64(total, it->seconds);
+                                            }
+                                        }
+                                    }
+
+                                    Vec4 cell_color;
+
+                                    { // Compute cell color:
+                                        U32 hours = total / 3600;
+                                        Vec4 a = ui->theme->bg_color_z2; 
+                                        Vec4 b = ui->theme->color_green; 
+
+                                        if (total == 0) {
+                                            cell_color = a;
+                                        } else if (hours < 2) {
+                                            cell_color = lerp(a, b, .5);
+                                        } else if (hours < 4) {
+                                            cell_color = lerp(a, b, .75);
+                                        } else if (hours < 8) {
+                                            cell_color = lerp(a, b, .9);
+                                        } else {
+                                            cell_color = b;
+                                        }
+                                    }
+
+                                    ui_style_vec4(UI_BG_COLOR, cell_color);
+                                    if (os_date_cmp(today, date) == 0) {
+                                        ui_style_rule(".cell") ui_style_vec4(UI_BORDER_COLOR, ui->theme->color_yellow);
+                                    }
+
+                                    if (cell->signals.hovered) {
+                                        ui_style_rule(".cell") ui_style_vec4(UI_BORDER_COLOR, ui->theme->color_yellow);
+                                        ui_tooltip(str("tooltip")) {
+                                            String date_str = os_date_to_str(tm, date);
+                                            String time_str = time_to_str(tm, total*1000);
+                                            String label = astr_fmt(tm, "%s %.*s (Total: %.*s)", day_labels[wday], STR(date_str), STR(time_str));
+                                            ui_label(0, "label", label);
+                                        }
+                                    }
+                                }
+                            }
+
+                            wday++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 static Void build_view_time_tracker () {
     tmem_new(tm);
 
@@ -1573,6 +1707,8 @@ static Void build_view_time_tracker () {
             ui_style_u32(UI_AXIS, UI_AXIS_VERTICAL);
             ui_style_f32(UI_SPACING, ui->theme->spacing);
             ui_style_size(UI_WIDTH, (UiSize){UI_SIZE_PIXELS, ui->config->card_width, 0});
+
+            build_heatmap();
 
             { // Build totals table:
                 String ftoday  = time_to_str(tm, view->today*1000);
@@ -1897,6 +2033,7 @@ static Void execute_commands () {
                 context->view.time_tracker.filter_buf = buf_new(context->view_mem, str("*"));
             }
 
+            context->view.time_tracker.heatmap_year = os_get_date().year;
             context->view.time_tracker.descending = true;
             array_init(&context->view.time_tracker.filtered_slots, context->view_mem);
         } break;

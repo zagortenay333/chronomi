@@ -55,6 +55,8 @@ Vec3 normalize_v3 (Vec3);
 Void print_v3     (Vec3, AString *, CString prefix, CString suffix);
 Vec3 lerp_v3      (Vec3, Vec3, F32);
 
+Vec4 lerp_v4      (Vec4, Vec4, F32);
+
 // =============================================================================
 // Matrices:
 // =============================================================================
@@ -87,7 +89,7 @@ Void print_m4        (Mat4, AString *, CString prefix, CString suffix);
 #define dot(a, b)         typematch(a, Vec3:dot_v3)(a, b)
 #define len(a)            typematch(a, Vec3:len_v3)(a)
 #define normalize(a)      typematch(a, Vec3:normalize_v3)(a)
-#define lerp(a, b, t)     typematch(a, Vec3:lerp_v3)(a, b, t)
+#define lerp(a, b, t)     typematch(a, Vec3:lerp_v3, Vec4:lerp_v4)(a, b, t)
 #define mat_print(v, a)   typematch(v, Mat4:print_m4)(v, a, #v":\n", "")
 #define mat_println(v, a) typematch(v, Mat4:print_m4)(v, a, #v":\n", "")
 #define vec_print(v, a)   typematch(v, Vec3:print_v3)(v, a, #v":", "")
